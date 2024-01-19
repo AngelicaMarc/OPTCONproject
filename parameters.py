@@ -108,3 +108,4 @@ plt.show()
 # fx = np.zeros((ns, ns))
 # fu = np.zeros((ni, ns))
 #######################
+#########àà
