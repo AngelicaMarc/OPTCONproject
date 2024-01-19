@@ -68,7 +68,50 @@ def dynamics(xx, uu):
     xxp[0] = xx[0,0] + dt * (Th * np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
     xxp[1] = xx[1,0] + dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
     xxp[2] = xx[2,0] + dt * qq
-    xxp[3] = xx[3,0] + dt * (M_delta + Ma) / JJ    
+    xxp[3] = xx[3,0] + dt * (M_delta + Ma) / JJ 
+
+    fu = np.zeros((ni, ns))
+    fx = np.zeros((ns, ns))
+
+    #df1
+    fx[0,0] = 1 + dt * (rho * CT * uu[0] * np.cos(alfa) * VV - CD * rho * VV) / mm
+    fx[1,0] = dt * (-0.5 * rho * VV**2 * CT * uu[0] * np.sin(alfa) + mm*gg*np.cos(theta-alfa)) / mm
+    fx[2,0] = dt * (-gg*np.cos(theta-alfa))
+    fx[3,0] = 0
+
+    fu[0,0] = dt * (0.5 * VV**2 * rho * CT * np.cos(alfa)) / mm
+    fu[1,0] = 0
+    fu[2,0] = 0
+
+    #df2
+    fx[0,1] = dt * (rho * CT * uu[0] * np.sin(alfa) + CL * rho + rho * (BB[0,0] * uu[1] + BB[0,1] * uu[2]) + mm*gg*np.cos(alfa)*VV**2) / (2*mm)
+    fx[1,1] = 1 - dt * (-0.5 * VV * rho * CT *uu[0] * np.cos(alfa) - (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
+    fx[2,1] = dt * (-gg*np.sin(theta-alfa)) / (VV)
+    fx[3,1] = dt
+
+    fu[0,1] = dt * (-0.5 * VV * rho * CT * np.sin(alfa)) / (mm)
+    fu[1,1] = dt * (-0.5 * rho * VV * (BB[0,0])) / mm
+    fu[2,1] = dt * (-0.5 * rho * VV * (BB[0,1])) / mm
+
+    #df3
+    fx[0,2] = 0
+    fx[1,2] = 0
+    fx[2,2] = 1
+    fx[3,2] = dt
+
+    fu[0,2] = 0
+    fu[1,2] = 0
+    fu[2,2] = 0
+
+    #df4
+    fx[0,3] = dt * (rho * VV * CM + rho * VV * (BB[1,0] * uu[1] + BB[1,1] * uu[2]))/JJ
+    fx[1,3] = 0
+    fx[2,3] = 0
+    fx[3,3] = 1
+
+    fu[0,3] = 0
+    fu[1,3] = dt * (0.5 * rho * VV * BB[1,0]) / JJ
+    fu[2,3] = dt * (0.5 * rho * VV * BB[1,1]) / JJ
 
     return xxp
 
