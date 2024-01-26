@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from scipy.optimize import fsolve
+
 # Model parameters
 mm = 26.82
 JJ = 595.9
@@ -22,23 +24,32 @@ ns = 4
 ni = 3
 
 # Initial conditions
-VV = 1500  # longitudinal speed
-alfa = 0  # angle of attack
-theta = 0  # pitch
-qq = 20  # pitch rate
+VV = 800 # longitudinal speed
+alfa = 0.1  # angle of attack
+theta = 0.2  # pitch
+qq = 0  # pitch rate
+
 
 xx = np.array([[VV], [alfa], [theta], [qq]])
+
+xx = np.squeeze(xx)
 
 # Control inputs
 uu = np.zeros((ni,1))
 uu[0] = 0.0  # Throttle
-uu[1] = 0.0  # Canard
 uu[2] = 0.0  # Elevator
+uu[1] = 0.0 # Canard
+
+#uu[0] = 0.0  # Throttle
+#uu[2] = ((((2*mm*gg*np.cos(theta))/(rho*VV**2))-CL-BB[0,0]*CM)/BB[0,1])/(1- (BB[1,1]*BB[0,0])/(BB[1,0]*BB[0,1]))  # Elevator
+#uu[1] = (CM - BB[1,1]*uu[2])/BB[1,0]  # Canard
+
+uu = np.squeeze(uu)
 
 # discretization step
 dt = 1e-3
 
-def dynamics(xx, uu):
+def dynamics(xx, uu, flag):
     
     # State
     # xx[0] = VV
@@ -50,32 +61,47 @@ def dynamics(xx, uu):
     # uu[0] = TT
     # uu[1] = CC
     # uu[2] = EE
-
     
     # Initialization
-    xxp = np.zeros((ns,1))
+    xxp = np.zeros((ns,))
     
     VV, alfa, theta, qq = xx #state variables
+    TT, CC, EE = uu #control inputs
 
     LL = 0.5 * CL * rho * VV**2 #Lift
     DD = 0.5 * CD * rho * VV**2 #Drag
     Ma = 0.5 * CM * rho * VV**2 #pitching moment
 
-    Th = 0.5 * rho * VV**2 * CT * uu[0] #Control Thrust
-    L_delta = 0.5 * rho * VV**2 * (BB[0,0] * uu[1] + BB[0,1] * uu[2]) #Control Lift
-    M_delta = 0.5 * rho * VV**2 * (BB[1,0] * uu[1] + BB[1,1] * uu[2])  #Control Moment
+    Th = 0.5 * rho * VV**2 * CT * TT #Control Thrust
+    L_delta = 0.5 * rho * VV**2 * (BB[0,0] * CC + BB[0,1] * EE) #Control Lift
+    M_delta = 0.5 * rho * VV**2 * (BB[1,0] * CC + BB[1,1] * EE)  #Control Moment
 
-    xxp[0] = xx[0,0] + dt * (Th * np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
-    xxp[1] = xx[1,0] + dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
-    xxp[2] = xx[2,0] + dt * qq
-    xxp[3] = xx[3,0] + dt * (M_delta + Ma) / JJ 
+    # Dynamics with the forward Euler method
+
+    if flag:
+        xxp[0] = xx[0] + dt * (Th * np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
+        xxp[1] = xx[1] + dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
+        xxp[2] = xx[2] + dt * qq
+        xxp[3] = xx[3] + dt * (M_delta + Ma) / JJ
+    else:
+        xxp[0] = dt * (Th * np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
+        xxp[1] = dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
+        xxp[2] = dt * qq
+        xxp[3] = dt * (M_delta + Ma) / JJ
+
+    return xxp
+
+def jacobian(xx, uu):
+    
+    VV, alfa, theta, qq = xx #state variables
+    TT, CC, EE = uu #control inputs
 
     fu = np.zeros((ni, ns))
     fx = np.zeros((ns, ns))
 
     #df1
-    fx[0,0] = 1 + dt * (rho * CT * uu[0] * np.cos(alfa) * VV - CD * rho * VV) / mm
-    fx[1,0] = dt * (-0.5 * rho * VV**2 * CT * uu[0] * np.sin(alfa) + mm*gg*np.cos(theta-alfa)) / mm
+    fx[0,0] = 1 + dt * (rho * CT * TT * np.cos(alfa) * VV - CD * rho * VV) / mm
+    fx[1,0] = dt * (-0.5 * rho * VV**2 * CT * TT * np.sin(alfa) + mm*gg*np.cos(theta-alfa)) / mm
     fx[2,0] = dt * (-gg*np.cos(theta-alfa))
     fx[3,0] = 0
 
@@ -84,8 +110,8 @@ def dynamics(xx, uu):
     fu[2,0] = 0
 
     #df2
-    fx[0,1] = dt * (rho * CT * uu[0] * np.sin(alfa) + CL * rho + rho * (BB[0,0] * uu[1] + BB[0,1] * uu[2]) + mm*gg*np.cos(alfa)*VV**2) / (2*mm)
-    fx[1,1] = 1 - dt * (-0.5 * VV * rho * CT *uu[0] * np.cos(alfa) - (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
+    fx[0,1] = dt * (rho * CT * TT * np.sin(alfa) + CL * rho + rho * (BB[0,0] * CC + BB[0,1] * EE) + mm*gg*np.cos(alfa)*VV**2) / (2*mm)
+    fx[1,1] = 1 - dt * (-0.5 * VV * rho * CT *TT * np.cos(alfa) - (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
     fx[2,1] = dt * (-gg*np.sin(theta-alfa)) / (VV)
     fx[3,1] = dt
 
@@ -104,7 +130,7 @@ def dynamics(xx, uu):
     fu[2,2] = 0
 
     #df4
-    fx[0,3] = dt * (rho * VV * CM + rho * VV * (BB[1,0] * uu[1] + BB[1,1] * uu[2]))/JJ
+    fx[0,3] = dt * (rho * VV * CM + rho * VV * (BB[1,0] * CC + BB[1,1] * EE))/JJ
     fx[1,3] = 0
     fx[2,3] = 0
     fx[3,3] = 1
@@ -113,10 +139,22 @@ def dynamics(xx, uu):
     fu[1,3] = dt * (0.5 * rho * VV * BB[1,0]) / JJ
     fu[2,3] = dt * (0.5 * rho * VV * BB[1,1]) / JJ
 
-    return xxp
+    return fx , fu
 
-xx=dynamics(xx,uu)
+def find_equilibria(x_guess, u_guess):
 
+    # Use fsolve to find the equilibria
+    equilibrium_states = fsolve(dynamics, x_guess, args=(u_guess, 0))
+
+    return equilibrium_states
+
+equilibrium_states = find_equilibria(xx, uu)
+
+print(f"Equilibrium States: {equilibrium_states}")
+
+xx = equilibrium_states
+
+print(f"xx: {xx}")
 # Define time steps
 num_steps = 10000
 time = np.arange(0, num_steps * dt, dt)
@@ -129,23 +167,45 @@ qq_values = np.zeros(num_steps)
 Mach_values = np.zeros(num_steps)
 
 # Simulate dynamics over time
+
 for i in range(num_steps):
-    xx = dynamics(xx, uu)
-    VV_values[i] = xx[0]/100
+    xx = dynamics(xx, uu, 0)
+    VV_values[i] = xx[0]
     alfa_values[i] = xx[1]
     theta_values[i] = xx[2]
     qq_values[i] = xx[3]
-    Mach_values[i] = xx[0] / a0
+    #Mach_values[i] = xx[0] / a0
 
 # Plot state variables
-plt.figure(figsize=(10, 6))
-plt.plot(time, VV_values, label='Longitudinal Speed')
-plt.plot(time, alfa_values, label='Angle of Attack')
-plt.plot(time, theta_values, label='Pitch')
-plt.plot(time, qq_values, label='Pitch Rate')
-plt.plot(time, Mach_values, label='Mach Number')
+plt.figure(figsize=(10, 12))
+
+# Plot Longitudinal Speed
+plt.subplot(4, 1, 1)
+plt.plot(time, VV_values)
 plt.xlabel('Time')
-plt.ylabel('State Variables')
-plt.legend()
+plt.ylabel('Longitudinal Speed')
 plt.grid(True)
+
+# Plot Angle of Attack
+plt.subplot(4, 1, 2)
+plt.plot(time, alfa_values)
+plt.xlabel('Time')
+plt.ylabel('Angle of Attack')
+plt.grid(True)
+
+# Plot Pitch
+plt.subplot(4, 1, 3)
+plt.plot(time, theta_values)
+plt.xlabel('Time')
+plt.ylabel('Pitch')
+plt.grid(True)
+
+# Plot Pitch Rate
+plt.subplot(4, 1, 4)
+plt.plot(time, qq_values)
+plt.xlabel('Time')
+plt.ylabel('Pitch Rate')
+plt.grid(True)
+
+plt.tight_layout()
 plt.show()
