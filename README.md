@@ -21,3 +21,32 @@ uu[1] = (CM - BB[1,1]*uu[2])/BB[1,0]  # Canard
 abc = -0.5 * rho * VV**2 * (CT*uu[0]-CD) / mm*gg
 print(abc)
 theta = np.arcsin(abc)  # pitch
+
+MODEL PARAMETERS AND INITIALIZATION
+
+We've defined all the model parameters, setted initial conditions and initialized the state stack and the control input stack.
+
+COMPUTATION OF DYNAMICS OF THE SYSTEM
+
+We've firstly defined a conditional variable "flag" that return the continous-time derivatives if flag==False and the discrete-time dynamics when flag==True. The discretization is computed by the implementation of the forward Euler method, updating the state variables xxp at the next time step. 
+
+COMPUTATION OF THE JACOBIAN
+
+We've computed the jacobian matrix for the system dynamics, denoting with fx the partial derivatives of the dynamics with respect to the state variables (VV, alfa, theta, qq) and with fu the partial derivatives of the dynamics with respect to the inputs (TT, CC, EE) .
+
+USAGE OF FUNCTION "func"
+
+We use this function to update the state based on the control input.
+
+DEFINITION OF MATRICES Qt and Rt
+
+We've defined the matrices for linear quadratic optimal problem for the state stack and the input stack. We want an high precision definition in state variables VV and alfa, so we use high numbers in matrices defined.
+
+COMPUTATION OF STAGE COST AND TERMINAL COST
+
+We've computed the stage cost function and the terminal cost function. The first one compute the cost function until T-1 instant, instead the other one computest the terminal cost at T instant. These functions take values in input from the "parameters" and "cost" functions. In the first one are defined states and inputs, in the second one we've defined the reference trajectories.
+
+GENERATION OF REFERENCE TRAJECTORY
+
+We've generated reference trajectories for the state stack and the input stack
+
