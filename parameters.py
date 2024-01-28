@@ -1,7 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
-from scipy.integrate import solve_ivp
+
+# Conditional variables
+verify = 0
+
 # Model parameters
 mm = 26.82
 JJ = 595.9
@@ -17,13 +20,13 @@ BB[0,0] = -3.575
 BB[0,1] = 0.065
 BB[1,0] = -1.3
 BB[1,1] = 6.5
-
+2
 
 ns = 4
 ni = 3
 
 # Initial conditions
-VV = 900 # longitudinal speed
+VV = 600 # longitudinal speed
 alfa = 0.1  # angle of attack
 theta = 0  # pitch
 qq = 0  # pitch rate
@@ -49,6 +52,9 @@ uu = np.squeeze(uu)
 # discretization step
 dt = 1e-3
 
+# Define time steps
+num_steps = 200000
+time = np.arange(0, num_steps * dt, dt)
 def dynamics(xx, uu, flag):
     
     # State
@@ -155,74 +161,70 @@ def func(uu):
     new=np.append(result[0:2], result[3])
     return new 
     
-
 def find_equilibria(u_guess):
     
     # Use fsolve to find the equilibria
-    equilibrium_states = fsolve(func, u_guess)
-    return equilibrium_states
+    equilibrium_inputs = fsolve(func, u_guess)
+    return equilibrium_inputs
 
-equilibrium_states = find_equilibria(uu)
+equilibrium_inputs = find_equilibria(uu)
+print(f"Equilibrium Inputs: {equilibrium_inputs}")
+uu = equilibrium_inputs
 
-print(f"Equilibrium States: {equilibrium_states}")
+# Verify that the dynamics are zero at the equilibrium
 
-uu = equilibrium_states
+if(verify):
+    # Initialize arrays to store state variables
+    VV_values = np.zeros(num_steps)
+    alfa_values = np.zeros(num_steps)
+    theta_values = np.zeros(num_steps)
+    qq_values = np.zeros(num_steps)
+    Mach_values = np.zeros(num_steps)
 
-# Define time steps
-num_steps = 200000
-time = np.arange(0, num_steps * dt, dt)
+    # Simulate dynamics over time
 
-# Initialize arrays to store state variables
-VV_values = np.zeros(num_steps)
-alfa_values = np.zeros(num_steps)
-theta_values = np.zeros(num_steps)
-qq_values = np.zeros(num_steps)
-Mach_values = np.zeros(num_steps)
+    print(f"Initial States: {xx}")
+    ##
+    for i in range(num_steps):
+        VV_values[i] = xx[0]
+        alfa_values[i] = xx[1]
+        theta_values[i] = xx[2]
+        qq_values[i] = xx[3]
+        xx = dynamics(xx, uu, 1)
+        #Mach_values[i] = xx[0] / a0
+    ##
+    print(f"Final States: {xx}")
 
-# Simulate dynamics over time
+    # Plot state variables
+    plt.figure(figsize=(10, 12))
 
-print(f"Initial States: {xx}")
-##
-for i in range(num_steps):
-    VV_values[i] = xx[0]
-    alfa_values[i] = xx[1]
-    theta_values[i] = xx[2]
-    qq_values[i] = xx[3]
-    xx = dynamics(xx, uu, 1)
-    #Mach_values[i] = xx[0] / a0
-##
-print(f"Final States: {xx}")
+    # Plot Longitudinal Speed
+    plt.subplot(4, 1, 1)
+    plt.plot(time, VV_values)
+    plt.xlabel('Time')
+    plt.ylabel('Longitudinal Speed')
+    plt.grid(True)
 
-# Plot state variables
-plt.figure(figsize=(10, 12))
+    # Plot Angle of Attack
+    plt.subplot(4, 1, 2)
+    plt.plot(time, alfa_values)
+    plt.xlabel('Time')
+    plt.ylabel('Angle of Attack')
+    plt.grid(True)
 
-# Plot Longitudinal Speed
-plt.subplot(4, 1, 1)
-plt.plot(time, VV_values)
-plt.xlabel('Time')
-plt.ylabel('Longitudinal Speed')
-plt.grid(True)
+    # Plot Pitch
+    plt.subplot(4, 1, 3)
+    plt.plot(time, theta_values)
+    plt.xlabel('Time')
+    plt.ylabel('Pitch')
+    plt.grid(True)
 
-# Plot Angle of Attack
-plt.subplot(4, 1, 2)
-plt.plot(time, alfa_values)
-plt.xlabel('Time')
-plt.ylabel('Angle of Attack')
-plt.grid(True)
+    # Plot Pitch Rate
+    plt.subplot(4, 1, 4)
+    plt.plot(time, qq_values)
+    plt.xlabel('Time')
+    plt.ylabel('Pitch Rate')
+    plt.grid(True)
 
-# Plot Pitch
-plt.subplot(4, 1, 3)
-plt.plot(time, theta_values)
-plt.xlabel('Time')
-plt.ylabel('Pitch')
-plt.grid(True)
-
-# Plot Pitch Rate
-plt.subplot(4, 1, 4)
-plt.plot(time, qq_values)
-plt.xlabel('Time')
-plt.ylabel('Pitch Rate')
-plt.grid(True)
-
-plt.tight_layout()
-plt.show()
+    plt.tight_layout()
+    plt.show()
