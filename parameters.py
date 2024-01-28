@@ -20,14 +20,14 @@ BB[0,0] = -3.575
 BB[0,1] = 0.065
 BB[1,0] = -1.3
 BB[1,1] = 6.5
-2
+
 
 ns = 4
 ni = 3
 
 # Initial conditions
-VV = 600 # longitudinal speed
-alfa = 0.1  # angle of attack
+VV = 900 # longitudinal speed
+alfa = 0.2  # angle of attack
 theta = 0  # pitch
 qq = 0  # pitch rate
 
@@ -47,15 +47,17 @@ uu[2] = 0.0
 #uu[1] = (mm*gg - CL + BB[1,1]*BB[0,1]*CM )/(1 - (BB[1,1]*BB[0,0])/(BB[1,0]*BB[0,1]))  # Canard
 #uu[2] = (-CM - BB[0,0]*uu[1])/BB[0,1]  # Elevator
 
+#uu = [0.30953803, -1.04573824, -0.28607073]
 uu = np.squeeze(uu)
 
 # discretization step
-dt = 1e-3
+dt = 5e-2
 
 # Define time steps
-num_steps = 200000
+num_steps = 30000
 time = np.arange(0, num_steps * dt, dt)
-def dynamics(xx, uu, flag):
+
+def dynamics(xx, uu, flag=1):
     
     # State
     # xx[0] = VV
@@ -156,24 +158,25 @@ def jacobian(xx, uu):
     xx = dynamics(xx_full, uu, 0)
     return (xx[2:])
 
-def func(uu):
-    result = dynamics(xx, uu, 0)
-    new=np.append(result[0:2], result[3])
-    return new 
+def func(input):
+    result = dynamics(xx, input[:3], 0)
+    return result 
     
 def find_equilibria(u_guess):
     
     # Use fsolve to find the equilibria
-    equilibrium_inputs = fsolve(func, u_guess)
+    inputs = np.append(u_guess, xx[3])
+    equilibrium_inputs = fsolve(func, inputs)
     return equilibrium_inputs
-
-equilibrium_inputs = find_equilibria(uu)
-print(f"Equilibrium Inputs: {equilibrium_inputs}")
-uu = equilibrium_inputs
 
 # Verify that the dynamics are zero at the equilibrium
 
 if(verify):
+
+    equilibrium_inputs = find_equilibria(uu)
+    print(f"Equilibrium Inputs: {equilibrium_inputs}")
+    uu = equilibrium_inputs[:3]
+
     # Initialize arrays to store state variables
     VV_values = np.zeros(num_steps)
     alfa_values = np.zeros(num_steps)

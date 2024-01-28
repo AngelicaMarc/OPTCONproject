@@ -24,11 +24,11 @@ theta = np.arcsin(abc)  # pitch
 
 MODEL PARAMETERS AND INITIALIZATION
 
-We've defined all the model parameters, setted initial conditions and initialized the state stack and the control input stack.
+We've defined all the model parameters, set initial conditions and initialized the state stack and the control input stack.
 
 COMPUTATION OF DYNAMICS OF THE SYSTEM
 
-We've firstly defined a conditional variable "flag" that return the continous-time derivatives if flag==False and the discrete-time dynamics when flag==True. The discretization is computed by the implementation of the forward Euler method, updating the state variables xxp at the next time step. 
+We've first defined a conditional variable "flag" that return the continous-time derivatives if flag==False and the discrete-time dynamics when flag==True. The discretization is computed by the implementation of the forward Euler method, updating the state variables xxp at the next time step. 
 
 COMPUTATION OF THE JACOBIAN
 
@@ -40,11 +40,11 @@ We use this function to update the state based on the control input.
 
 DEFINITION OF MATRICES Qt and Rt
 
-We've defined the matrices for linear quadratic optimal problem for the state stack and the input stack. We want an high precision definition in state variables VV and alfa, so we use high numbers in matrices defined.
+We've defined the matrices for linear quadratic optimal problem for the state stack and the input stack. We want high precision definition in state variables VV and alfa, so we use high numbers in matrices defined.
 
 COMPUTATION OF STAGE COST AND TERMINAL COST
 
-We've computed the stage cost function and the terminal cost function. The first one compute the cost function until T-1 instant, instead the other one computest the terminal cost at T instant. These functions take values in input from the "parameters" and "cost" functions. In the first one are defined states and inputs, in the second one we've defined the reference trajectories.
+We've computed the stage cost function and the terminal cost function. The first one compute the cost function until T-1 instant, instead the other one computes the terminal cost at T instant. These functions take values in input from the "parameters" and "cost" functions. In the first one are defined states and inputs, in the second one we've defined the reference trajectories.
 
 GENERATION OF REFERENCE TRAJECTORY
 
