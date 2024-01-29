@@ -2,8 +2,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
 
+# This file contains the model parameters and the dynamics of the system
+# It's also useful to verify equilibria and the Jacobian of the system
+
 # Conditional variables
-verify = 0
+verify_equilibrium = 0
+verify_jacobian = 0
+
+# discretization step
+dt = 1e-1
+
+# Define time steps
+num_steps = 1000
+time = np.arange(0, num_steps * dt, dt)
 
 # Model parameters
 mm = 26.82
@@ -49,13 +60,6 @@ uu[2] = 0.0
 
 #uu = [0.30953803, -1.04573824, -0.28607073]
 uu = np.squeeze(uu)
-
-# discretization step
-dt = 5e-2
-
-# Define time steps
-num_steps = 30000
-time = np.arange(0, num_steps * dt, dt)
 
 def dynamics(xx, uu, flag=1):
     
@@ -119,8 +123,8 @@ def jacobian(xx, uu):
     fu[2,0] = 0
 
     #df2
-    fx[0,1] = dt * (rho * CT * TT * np.sin(alfa) + CL * rho + rho * (BB[0,0] * CC + BB[0,1] * EE) + mm*gg*np.cos(alfa)*VV**2) / (2*mm)
-    fx[1,1] = 1 - dt * (-0.5 * VV * rho * CT *TT * np.cos(alfa) - (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
+    fx[0,1] = dt * (-rho * CT * TT * np.sin(alfa) - CL * rho - rho * (BB[0,0] * CC + BB[0,1] * EE) + mm*gg*np.cos(alfa)/VV**2) / (2*mm)
+    fx[1,1] = 1 - dt * (0.5 * VV * rho * CT *TT * np.cos(alfa) + (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
     fx[2,1] = dt * (-gg*np.sin(theta-alfa)) / (VV)
     fx[3,1] = dt
 
@@ -170,8 +174,7 @@ def find_equilibria(u_guess):
     return equilibrium_inputs
 
 # Verify that the dynamics are zero at the equilibrium
-
-if(verify):
+if(verify_equilibrium):
 
     equilibrium_inputs = find_equilibria(uu)
     print(f"Equilibrium Inputs: {equilibrium_inputs}")
@@ -231,3 +234,38 @@ if(verify):
 
     plt.tight_layout()
     plt.show()
+
+# Verify that the Jacobian is correct
+if(verify_jacobian):
+
+    fx, fu = jacobian(xx, uu)
+    xxp = dynamics(xx, uu)
+
+    # Arrays to store data
+    xdx = np.zeros((ns,))
+    dltx = np.random.normal(0,dt,ns)
+    udu = np.zeros((ni,))
+    dltu = np.random.normal(0,dt,ni)
+    AA = fx.T
+    BB = fu.T
+
+    for i in range (0,ns):
+        dltx[i] = dt
+    for i in range (0,ni):
+        dltu[i] = dt
+
+    xdx = xx + dltx
+    xx_plus = dynamics(xdx, uu)
+    diff_x = xx_plus - xxp
+    check_x = diff_x - AA@dltx
+
+    udu = uu + dltu
+    xx_plus = dynamics(xx, udu)   
+    diff_u = xx_plus - xxp     
+    check_u = diff_u - BB@dltu
+
+    print("\n\n")
+    blue_bold_title = "\033[1;34mERROR IN THE EVALUATED DERIVATIVES:\033[0m"
+    print(blue_bold_title)
+    print(f'\nError in derivatives of x is:\n{check_x}')
+    print(f'\nError in derivatives of u is:\n{check_u}\n')
