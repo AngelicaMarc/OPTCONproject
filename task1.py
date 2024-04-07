@@ -7,6 +7,7 @@ import newton as nwt
 
 # Plot the equilibrium points
 plot = 1
+##############
 
 # Import model parameters
 
