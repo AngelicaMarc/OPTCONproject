@@ -5,7 +5,7 @@ import cost as cst
 
 #define params
 
-a=1
+a=12
 ns = param.ns  # number of states
 ni = param.ni  # number of inputs
 dt = param.dt  # sample time
