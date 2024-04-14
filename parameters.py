@@ -7,7 +7,7 @@ from scipy.optimize import fsolve
 
 # Conditional variables
 verify_equilibrium = 0
-verify_jacobian = 0
+verify_jacobian = 1
 
 # discretization step
 dt = 1e-1
@@ -78,6 +78,8 @@ def dynamics(xx, uu, flag=1):
     xxp = np.zeros((ns,))
     
     VV, alfa, theta, qq = xx #state variables
+
+    print(VV)
 
     TT, CC, EE = uu #control inputs
 
@@ -239,33 +241,9 @@ if(verify_equilibrium):
 if(verify_jacobian):
 
     fx, fu = jacobian(xx, uu)
+    fx = fx.T
+    fu = fu.T
     xxp = dynamics(xx, uu)
-
-    # Arrays to store data
-    xdx = np.zeros((ns,))
-    dltx = np.random.normal(0,dt,ns)
-    udu = np.zeros((ni,))
-    dltu = np.random.normal(0,dt,ni)
-    AA = fx.T
-    BB = fu.T
-
-    for i in range (0,ns):
-        dltx[i] = dt
-    for i in range (0,ni):
-        dltu[i] = dt
-
-    xdx = xx + dltx
-    xx_plus = dynamics(xdx, uu)
-    diff_x = xx_plus - xxp
-    check_x = diff_x - AA@dltx
-
-    udu = uu + dltu
-    xx_plus = dynamics(xx, udu)   
-    diff_u = xx_plus - xxp     
-    check_u = diff_u - BB@dltu
-
-    print("\n\n")
-    blue_bold_title = "\033[1;34mERROR IN THE EVALUATED DERIVATIVES:\033[0m"
-    print(blue_bold_title)
-    print(f'\nError in derivatives of x is:\n{check_x}')
-    print(f'\nError in derivatives of u is:\n{check_u}\n')
+    # Verify the dynamics of the system
+    np.testing.assert_allclose(xxp, fx @ xx + fu @ uu, atol=1e+01)
+    print("Dynamics verification passed!")
