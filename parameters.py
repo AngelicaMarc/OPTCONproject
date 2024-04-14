@@ -7,10 +7,10 @@ from scipy.optimize import fsolve
 
 # Conditional variables
 verify_equilibrium = 0
-verify_jacobian = 1
+verify_jacobian = 0
 
 # discretization step
-dt = 1e-1
+dt = 1e-3
 
 # Define time steps
 num_steps = 1000
@@ -39,7 +39,7 @@ ni = 3
 # Initial conditions
 VV = 900 # longitudinal speed
 alfa = 0.2  # angle of attack
-theta = 0  # pitch
+theta = 0.1  # pitch
 qq = 0  # pitch rate
 
 
@@ -245,5 +245,5 @@ if(verify_jacobian):
     fu = fu.T
     xxp = dynamics(xx, uu)
     # Verify the dynamics of the system
-    np.testing.assert_allclose(xxp, fx @ xx + fu @ uu, atol=1e+01)
+    np.testing.assert_allclose(xxp, fx @ xx + fu @ uu, atol=1e-03)
     print("Dynamics verification passed!")
