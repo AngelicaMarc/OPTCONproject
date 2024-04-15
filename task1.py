@@ -20,7 +20,7 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-max_iters = 4
+max_iters = 5
 
 # Import equilibrium points
 
@@ -39,6 +39,9 @@ xx1 = [600, 0.1, 0, 0]
 uu2 = [0.32793345, -0.32531731, -0.14198654]
 xx2 = [900, 0.2, 0, 0]
 
+#uu2 = [0.28186975 -0.56941592 -0.19080626 ]
+#xx2 = [750, 0.2, 0, 0]
+
 # Initialize the reference trajectory
 
 traj_ref = np.zeros((ns+ni, ts))
@@ -53,7 +56,7 @@ for tt in range(1,ts):
     
     traj_ref[:ns, tt] = traj[:ns]  
 
-    if tt < (ts/10):
+    if tt < tm:
         traj_ref[ns:, tt] = uu1
 
     else:  
@@ -154,43 +157,39 @@ fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
 axs[0].plot(tt_hor, xx_ref[0,:], 'm--', linewidth=2)
 axs[0].grid()
-axs[0].set_ylabel('$x$')
+axs[0].set_ylabel('$V$')
 
 axs[1].plot(tt_hor, xx_star[1,:], linewidth=2)
 axs[1].plot(tt_hor, xx_ref[1,:], 'm--', linewidth=2)
 axs[1].grid()
-axs[1].set_ylabel('$y$')
+axs[1].set_ylabel('$\\alpha$')
 
 axs[2].plot(tt_hor, xx_star[2,:], linewidth=2)
 axs[2].plot(tt_hor, xx_ref[2,:], 'm--', linewidth=2)
 axs[2].grid()
-axs[2].set_ylabel('$psi$')
+axs[2].set_ylabel('$\\theta$')
 
 axs[3].plot(tt_hor, xx_star[3,:], linewidth=2)
 axs[3].plot(tt_hor, xx_ref[3,:], 'm--', linewidth=2)
 axs[3].grid()
-axs[3].set_ylabel('$V$')
+axs[3].set_ylabel('$q$')
 
-axs[4].plot(tt_hor, xx_star[4,:], linewidth=2)
-axs[4].plot(tt_hor, xx_ref[4,:], 'm--', linewidth=2)
+axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
+axs[4].plot(tt_hor, uu_ref[0,:], 'm--', linewidth=2)
 axs[4].grid()
-axs[4].set_ylabel('$beta$')
+axs[4].set_ylabel('$\delta_c$')
 
-axs[5].plot(tt_hor, xx_star[5,:], linewidth=2)
-axs[5].plot(tt_hor, xx_ref[5,:], 'm--', linewidth=2)
+axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
+axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
 axs[5].grid()
-axs[5].set_ylabel('$psi dot$')
+axs[5].set_ylabel('$\delta_m$')
 
-axs[6].plot(tt_hor, uu_star[0,:],'g', linewidth=2)
-axs[6].plot(tt_hor, uu_ref[0,:], 'm--', linewidth=2)
+axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
+axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
 axs[6].grid()
-axs[6].set_ylabel('$delta$')
+axs[6].set_ylabel('$\delta_e$')
 
-axs[7].plot(tt_hor, uu_star[1,:],'g', linewidth=2)
-axs[7].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
-axs[7].grid()
-axs[7].set_ylabel('$F$')
-axs[7].set_xlabel('time')
+axs[6].set_xlabel('time')
     
 plt.show()
 

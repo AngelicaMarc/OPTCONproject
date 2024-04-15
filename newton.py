@@ -5,7 +5,6 @@ import cost as cst
 
 #define params
 
-a=12
 ns = param.ns  # number of states
 ni = param.ni  # number of inputs
 dt = param.dt  # sample time
@@ -23,7 +22,7 @@ c = 0.5
 beta = 0.7
 armijo_maxiters = 20    # number of Armijo iterations
 stepsize_0 = 1          # initial stepsize
-armijo_plt = True
+armijo_plt = 0
 
 # Import the cost matrices from costs
 Qt = cst.QQt
@@ -132,7 +131,7 @@ def ltv_LQR(AAin, BBin, QQin, RRin, SSin, QQfin, ts, x0, qqin = None, rrin = Non
         pptp = pp[:, tt+1][:,None]
 
         MMt_inv = np.linalg.inv(RRt + BBt.T @ PPtp @ BBt)
-        print(MMt_inv)
+        # print(MMt_inv)
         mmt = rrt + BBt.T @ pptp
         
         PPt = AAt.T @ PPtp @ AAt - (BBt.T@PPtp@AAt + SSt).T @ MMt_inv @ (BBt.T@PPtp@AAt + SSt) + QQt

@@ -6,14 +6,14 @@ from scipy.optimize import fsolve
 # It's also useful to verify equilibria and the Jacobian of the system
 
 # Conditional variables
-verify_equilibrium = 0
+verify_equilibrium = 1
 verify_jacobian = 0
 
 # discretization step
-dt = 1e-3
+dt = 5e-3
 
 # Define time steps
-num_steps = 1000
+num_steps = 50000
 time = np.arange(0, num_steps * dt, dt)
 
 # Model parameters
@@ -39,7 +39,7 @@ ni = 3
 # Initial conditions
 VV = 900 # longitudinal speed
 alfa = 0.2  # angle of attack
-theta = 0.1  # pitch
+theta = 0  # pitch
 qq = 0  # pitch rate
 
 
@@ -79,7 +79,7 @@ def dynamics(xx, uu, flag=1):
     
     VV, alfa, theta, qq = xx #state variables
 
-    print(VV)
+    # print(VV)
 
     TT, CC, EE = uu #control inputs
 
