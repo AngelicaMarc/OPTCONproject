@@ -148,6 +148,13 @@ plt.yscale('log')
 plt.grid()
 plt.show(block=False)
 
+# Definition of the sigmoid function for plotting purposes
+
+def stable_sigmoid(x):
+
+    sig = np.where(x < 0, np.exp(x) / (1 + np.exp(x)), 1 / (1 + np.exp(-x)))
+    return sig
+
 ##############################################################
 # Design OPTIMAL TRAJECTORY  
 ##############################################################
