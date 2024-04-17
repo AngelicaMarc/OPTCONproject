@@ -64,18 +64,24 @@ print(f"initial state: {traj_ref[:ns,0]}")
 
 for tt in range(1,ts):
 
-    traj = param.dynamics(traj_ref[:ns,tt-1], traj_ref[ns:,tt-1],1)
+    # traj = param.dynamics(traj_ref[:ns,tt-1], traj_ref[ns:,tt-1],1)
     
-    traj_ref[:ns, tt] = traj[:ns]  
+    # traj_ref[:ns, tt] = traj[:ns]  
+
     if tt < ts/8:
         traj_ref[ns:, tt] = uu1
+        traj_ref[:ns, tt] = xx1 
     else:
         if tt > 7*ts/8:
             traj_ref[ns:, tt] = uu2
+            traj_ref[:ns, tt] = xx2
         else:
-            traj_ref[4, tt] = custom_sigmoid(tt, uu1[0], uu2[0], 0.0001, tm)
-            traj_ref[5, tt] = custom_sigmoid(tt, uu1[1], uu2[1], 0.0001, tm)
-            traj_ref[6, tt] = custom_sigmoid(tt, uu1[2], uu2[2], 0.0001, tm)
+            for ii in range(0, ns-1):
+                traj_ref[ii, tt] = custom_sigmoid(tt, xx1[ii], xx2[ii], 0.0001, tm)
+            for jj in range(1, ni):
+                traj_ref[4, tt] = custom_sigmoid(tt, uu1[0], uu2[0], 0.0001, tm)
+                traj_ref[5, tt] = custom_sigmoid(tt, uu1[1], uu2[1], 0.0001, tm)
+                traj_ref[6, tt] = custom_sigmoid(tt, uu1[2], uu2[2], 0.0001, tm)
 
 
 print(f"final state: {traj_ref[:ns,ts-1]}")
@@ -90,22 +96,22 @@ if(plot):
     fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
     axs[0].plot(tt_hor, traj_ref[0,:], 'm--', linewidth=2)
-    axs[0].axhline(y=xx2[0], color='r', linestyle='--', linewidth=1)
+    #axs[0].axhline(y=xx2[0], color='r', linestyle='--', linewidth=1)
     axs[0].grid()
     axs[0].set_ylabel('$V$', rotation=0)
 
     axs[1].plot(tt_hor, traj_ref[1,:], 'm--', linewidth=2) 
-    axs[1].axhline(y=xx2[1], color='r', linestyle='--', linewidth=1)
+    #axs[1].axhline(y=xx2[1], color='r', linestyle='--', linewidth=1)
     axs[1].grid()
     axs[1].set_ylabel('$\\alpha$', rotation=0)
 
     axs[2].plot(tt_hor, traj_ref[2,:], 'm--', linewidth=2)
-    axs[2].axhline(y=xx2[2], color='r', linestyle='--', linewidth=1)
+    #axs[2].axhline(y=xx2[2], color='r', linestyle='--', linewidth=1)
     axs[2].grid()
     axs[2].set_ylabel('$\\theta$', rotation=0)
 
     axs[3].plot(tt_hor, traj_ref[3,:], 'm--', linewidth=2)
-    axs[3].axhline(y=xx2[3], color='r', linestyle='--', linewidth=1)
+    #axs[3].axhline(y=xx2[3], color='r', linestyle='--', linewidth=1)
     axs[3].grid()
     axs[3].set_ylabel('$q$', rotation=0)
 
