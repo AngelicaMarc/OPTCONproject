@@ -7,13 +7,14 @@ from scipy.optimize import fsolve
 
 # Conditional variables
 verify_equilibrium = 1
+plot = 0
 verify_jacobian = 0
 
 # discretization step
-dt = 5e-3
+dt = 1e-3
 
 # Define time steps
-num_steps = 50000
+num_steps = 250000
 time = np.arange(0, num_steps * dt, dt)
 
 # Model parameters
@@ -38,8 +39,8 @@ ni = 3
 
 # Initial conditions
 VV = 900 # longitudinal speed
-alfa = 0.2  # angle of attack
-theta = 0  # pitch
+alfa = 0.1 # angle of attack
+theta = 0.1  # pitch
 qq = 0  # pitch rate
 
 
@@ -171,7 +172,7 @@ def func(input):
 def find_equilibria(u_guess):
     
     # Use fsolve to find the equilibria
-    inputs = np.append(u_guess, xx[3])
+    inputs = np.append(u_guess, 0.0)
     equilibrium_inputs = fsolve(func, inputs)
     return equilibrium_inputs
 
@@ -203,39 +204,40 @@ if(verify_equilibrium):
     ##
     print(f"Final States: {xx}")
 
-    # Plot state variables
-    plt.figure(figsize=(10, 12))
+    if(plot):
+        # Plot state variables
+        plt.figure(figsize=(10, 12))
 
-    # Plot Longitudinal Speed
-    plt.subplot(4, 1, 1)
-    plt.plot(time, VV_values)
-    plt.xlabel('Time')
-    plt.ylabel('Longitudinal Speed')
-    plt.grid(True)
+        # Plot Longitudinal Speed
+        plt.subplot(4, 1, 1)
+        plt.plot(time, VV_values)
+        plt.xlabel('Time')
+        plt.ylabel('Longitudinal Speed')
+        plt.grid(True)
 
-    # Plot Angle of Attack
-    plt.subplot(4, 1, 2)
-    plt.plot(time, alfa_values)
-    plt.xlabel('Time')
-    plt.ylabel('Angle of Attack')
-    plt.grid(True)
+        # Plot Angle of Attack
+        plt.subplot(4, 1, 2)
+        plt.plot(time, alfa_values)
+        plt.xlabel('Time')
+        plt.ylabel('Angle of Attack')
+        plt.grid(True)
 
-    # Plot Pitch
-    plt.subplot(4, 1, 3)
-    plt.plot(time, theta_values)
-    plt.xlabel('Time')
-    plt.ylabel('Pitch')
-    plt.grid(True)
+        # Plot Pitch
+        plt.subplot(4, 1, 3)
+        plt.plot(time, theta_values)
+        plt.xlabel('Time')
+        plt.ylabel('Pitch')
+        plt.grid(True)
 
-    # Plot Pitch Rate
-    plt.subplot(4, 1, 4)
-    plt.plot(time, qq_values)
-    plt.xlabel('Time')
-    plt.ylabel('Pitch Rate')
-    plt.grid(True)
+        # Plot Pitch Rate
+        plt.subplot(4, 1, 4)
+        plt.plot(time, qq_values)
+        plt.xlabel('Time')
+        plt.ylabel('Pitch Rate')
+        plt.grid(True)
 
-    plt.tight_layout()
-    plt.show()
+        plt.tight_layout()
+        plt.show()
 
 # Verify that the Jacobian is correct
 if(verify_jacobian):

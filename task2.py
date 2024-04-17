@@ -1,9 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import fsolve
 import parameters as param
-import cost as cst
 import newton as nwt
+import math
+
+def sigmoid(x):
+
+    if x >= 0:
+        z = math.exp(-x)
+        sig = 1 / (1 + z)
+        return sig
+    else:
+        z = math.exp(x)
+        sig = z / (1 + z)
+        return sig
+
+def custom_sigmoid(x, lower, upper, stretch_factor, translation_factor):
+    scaled_x = (x - translation_factor) * stretch_factor
+    sig = sigmoid(scaled_x)
+    cust = lower + (upper - lower) * sig
+    return cust
 
 # Plot the equilibrium points
 plot = 1
@@ -20,7 +36,7 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-max_iters = 5
+max_iters = 4
 
 # Import equilibrium points
 
@@ -32,15 +48,11 @@ xx2 = np.zeros((ns))
 uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
 
+xx1 = [6.0e+02, 2.0e-01, 1.e-01, 0.0e+00]
+uu1 = [0.31425583, -1.01254331, -0.27943174 ]
 
-uu1 = [0.30953803, -1.04573824, -0.28607073]
-xx1 = [600, 0.1, 0, 0]
-
-uu2 = [0.32793345, -0.32531731, -0.14198654]
-xx2 = [900, 0.2, 0, 0]
-
-#uu2 = [0.28186975 -0.56941592 -0.19080626 ]
-#xx2 = [750, 0.2, 0, 0]
+xx2 = [9.e+02, 1.0e-01, 0.1, 0.e+00]
+uu2 = [0.42612887, -0.35995701, -0.14891448]
 
 # Initialize the reference trajectory
 
@@ -55,12 +67,15 @@ for tt in range(1,ts):
     traj = param.dynamics(traj_ref[:ns,tt-1], traj_ref[ns:,tt-1],1)
     
     traj_ref[:ns, tt] = traj[:ns]  
-
-    if tt < tm:
+    if tt < ts/8:
         traj_ref[ns:, tt] = uu1
-
-    else:  
-        traj_ref[ns:, tt] = uu2
+    else:
+        if tt > 7*ts/8:
+            traj_ref[ns:, tt] = uu2
+        else:
+            traj_ref[4, tt] = custom_sigmoid(tt, uu1[0], uu2[0], 0.0001, tm)
+            traj_ref[5, tt] = custom_sigmoid(tt, uu1[1], uu2[1], 0.0001, tm)
+            traj_ref[6, tt] = custom_sigmoid(tt, uu1[2], uu2[2], 0.0001, tm)
 
 
 print(f"final state: {traj_ref[:ns,ts-1]}")
@@ -95,14 +110,17 @@ if(plot):
     axs[3].set_ylabel('$q$', rotation=0)
 
     axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
+    
     axs[4].grid()
     axs[4].set_ylabel('$\delta_t$', rotation=0)
 
     axs[5].plot(tt_hor, traj_ref[5,:], 'm--', linewidth=2)
+
     axs[5].grid()
     axs[5].set_ylabel('$\delta_c$', rotation=0)
 
     axs[6].plot(tt_hor, traj_ref[6,:], 'm--', linewidth=2)
+
     axs[6].grid()
     axs[6].set_ylabel('$\delta_e$', rotation=0)
     axs[6].set_xlabel('Time')
@@ -147,8 +165,6 @@ plt.ylabel('$J(\\mathbf{u}^k)$')
 plt.yscale('log')
 plt.grid()
 plt.show(block=False)
-
-# Definition of the sigmoid function for plotting purposes
 
 ##############################################################
 # Design OPTIMAL TRAJECTORY  
@@ -196,9 +212,10 @@ axs[6].set_xlabel('time')
 plt.show()
 
 # Plotting the trajectory
+# TO FIX
 plt.plot(xx_star[0,:], xx_star[1,:], label='Optimal Trajectory')
 plt.plot(xx_ref[0,:], xx_ref[1,:],'m--', label='Reference Trajectory')
-plt.title('Vehicle Trajectory')
+plt.title('Airplane Trajectory')
 plt.xlabel('X-axis')
 plt.ylabel('Y-axis')
 plt.legend()
