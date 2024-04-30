@@ -126,8 +126,8 @@ def jacobian(xx, uu):
     fu[2,0] = 0
 
     #df2
-    fx[0,1] = dt * (-rho * CT * TT * np.sin(alfa) - CL * rho - rho * (BB[0,0] * CC + BB[0,1] * EE) + mm*gg*np.cos(alfa)/VV**2) / (2*mm)
-    fx[1,1] = 1 - dt * (0.5 * VV * rho * CT *TT * np.cos(alfa) + (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
+    fx[0,1] = -dt * (rho * CT * TT * np.sin(alfa) + CL * rho + rho * (BB[0,0] * CC + BB[0,1] * EE) + mm*gg*np.cos(alfa-theta)/VV**2) / (mm)
+    fx[1,1] = 1 - dt * (0.5 * VV * rho * CT *TT * np.cos(alfa) - (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
     fx[2,1] = dt * (-gg*np.sin(theta-alfa)) / (VV)
     fx[3,1] = dt
 
@@ -152,8 +152,8 @@ def jacobian(xx, uu):
     fx[3,3] = 1
 
     fu[0,3] = 0
-    fu[1,3] = dt * (0.5 * rho * VV * BB[1,0]) / JJ
-    fu[2,3] = dt * (0.5 * rho * VV * BB[1,1]) / JJ
+    fu[1,3] = dt * (0.5 * rho * VV**2 * BB[1,0]) / JJ
+    fu[2,3] = dt * (0.5 * rho * VV**2 * BB[1,1]) / JJ
 
     return fx , fu
 
