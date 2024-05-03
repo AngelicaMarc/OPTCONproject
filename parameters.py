@@ -6,7 +6,7 @@ from scipy.optimize import fsolve
 # It's also useful to verify equilibria and the Jacobian of the system
 
 # Conditional variables
-verify_equilibrium = 1
+verify_equilibrium = 0
 plot = 0
 verify_jacobian = 0
 
@@ -14,7 +14,7 @@ verify_jacobian = 0
 dt = 1e-3
 
 # Define time steps
-num_steps = 250000
+num_steps = 20000
 time = np.arange(0, num_steps * dt, dt)
 
 # Model parameters
@@ -95,17 +95,17 @@ def dynamics(xx, uu, flag=1):
     # Dynamics with the forward Euler method
 
     if flag:
-        xxp[0] = xx[0] + dt * (Th * np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
-        xxp[1] = xx[1] + dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
-        xxp[2] = xx[2] + dt * qq
-        xxp[3] = xx[3] + dt * ((M_delta + Ma) / JJ)
+        xxp[0] = VV + dt * (Th * np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
+        xxp[1] = alfa+ dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
+        xxp[2] = theta + dt * qq
+        xxp[3] = qq + dt * ((M_delta + Ma) / JJ)
     else:
-        xxp[0] = dt * (0.5 * rho * VV**2 * CT * TT * np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
-        xxp[1] = dt * (qq - (0.5 * rho * VV**2 * CT * TT * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
+        xxp[0] = dt * (Th* np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
+        xxp[1] = dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
         xxp[2] = dt * qq
         xxp[3] = dt * (M_delta + Ma) / JJ
 
-    return xxp
+    return xxp.squeeze()
 
 def jacobian(xx, uu):
     
@@ -126,8 +126,10 @@ def jacobian(xx, uu):
     fu[2,0] = 0
 
     #df2
-    fx[0,1] = dt * (-rho * CT * TT * np.sin(alfa) - CL * rho - rho * (BB[0,0] * CC + BB[0,1] * EE) + mm*gg*np.cos(alfa)/VV**2) / (2*mm)
-    fx[1,1] = 1 - dt * (0.5 * VV * rho * CT *TT * np.cos(alfa) + (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
+    fx[0,1] = -dt * (rho * CT * TT * np.sin(alfa) + CL * rho + rho * (BB[0,0] * CC + BB[0,1] * EE) + mm*gg*np.cos(alfa-theta)/VV**2) / (mm)
+    # fx[0,1] = dt*(((rho*(xx[0]**2)*(BB[0,0]*uu[1] + BB[0,1]*uu[2]))/2 - gg*mm*np.cos(xx[1] - xx[2]) + (CL*rho*(xx[0]**2))/2 +
+    # (CT*rho*uu[0]*(xx[0]**2)*np.sin(xx[1]))/2)/(mm*(xx[0]**2)) - (CL*rho*xx[0] + rho*xx[0]*(BB[0,0]*uu[1] + BB[0,1]*uu[2]) + CT*rho*uu[0]*xx[0]*np.sin(xx[1]))/(mm*xx[0]))
+    fx[1,1] = 1 - dt * (0.5 * VV * rho * CT *TT * np.cos(alfa) - (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
     fx[2,1] = dt * (-gg*np.sin(theta-alfa)) / (VV)
     fx[3,1] = dt
 
@@ -152,8 +154,8 @@ def jacobian(xx, uu):
     fx[3,3] = 1
 
     fu[0,3] = 0
-    fu[1,3] = dt * (0.5 * rho * VV * BB[1,0]) / JJ
-    fu[2,3] = dt * (0.5 * rho * VV * BB[1,1]) / JJ
+    fu[1,3] = dt * (0.5 * rho * VV**2 * BB[1,0]) / JJ
+    fu[2,3] = dt * (0.5 * rho * VV**2 * BB[1,1]) / JJ
 
     return fx , fu
 
@@ -246,6 +248,7 @@ if(verify_jacobian):
     fx = fx.T
     fu = fu.T
     xxp = dynamics(xx, uu)
+    print(uu)
     # Verify the dynamics of the system
     np.testing.assert_allclose(xxp, fx @ xx + fu @ uu, atol=1e-03)
     print("Dynamics verification passed!")

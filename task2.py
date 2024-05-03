@@ -36,7 +36,7 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-max_iters = 4
+max_iters = 2
 
 # Import equilibrium points
 
@@ -48,11 +48,11 @@ xx2 = np.zeros((ns))
 uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
 
-xx1 = [6.0e+02, 2.0e-01, 1.e-01, 0.0e+00]
-uu1 = [0.31425583, -1.01254331, -0.27943174 ]
+uu1 = [0.30953803, -1.04573824, -0.28607073]
+xx1 = [600, 0.1, 0, 0]
 
-xx2 = [9.e+02, 1.0e-01, 0.1, 0.e+00]
-uu2 = [0.42612887, -0.35995701, -0.14891448]
+uu2 = [0.42612887, -0.35995701, -0.14891448 ]
+xx2 = [900, 0.1, 0.1, 0]
 
 # Initialize the reference trajectory
 
@@ -77,11 +77,11 @@ for tt in range(1,ts):
             traj_ref[:ns, tt] = xx2
         else:
             for ii in range(0, ns-1):
-                traj_ref[ii, tt] = custom_sigmoid(tt, xx1[ii], xx2[ii], 0.0001, tm)
+                traj_ref[ii, tt] = custom_sigmoid(tt, xx1[ii], xx2[ii], 0.001, tm)
             for jj in range(1, ni):
-                traj_ref[4, tt] = custom_sigmoid(tt, uu1[0], uu2[0], 0.0001, tm)
-                traj_ref[5, tt] = custom_sigmoid(tt, uu1[1], uu2[1], 0.0001, tm)
-                traj_ref[6, tt] = custom_sigmoid(tt, uu1[2], uu2[2], 0.0001, tm)
+                traj_ref[4, tt] = custom_sigmoid(tt, uu1[0], uu2[0], 0.001, tm)
+                traj_ref[5, tt] = custom_sigmoid(tt, uu1[1], uu2[1], 0.001, tm)
+                traj_ref[6, tt] = custom_sigmoid(tt, uu1[2], uu2[2], 0.001, tm)
 
 
 print(f"final state: {traj_ref[:ns,ts-1]}")
@@ -218,9 +218,9 @@ axs[6].set_xlabel('time')
 plt.show()
 
 # Plotting the trajectory
-# TO FIX
-plt.plot(xx_star[0,:], xx_star[1,:], label='Optimal Trajectory')
-plt.plot(xx_ref[0,:], xx_ref[1,:],'m--', label='Reference Trajectory')
+
+plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
 plt.title('Airplane Trajectory')
 plt.xlabel('X-axis')
 plt.ylabel('Y-axis')
