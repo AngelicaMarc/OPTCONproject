@@ -127,8 +127,6 @@ def jacobian(xx, uu):
 
     #df2
     fx[0,1] = -dt * (rho * CT * TT * np.sin(alfa) + CL * rho + rho * (BB[0,0] * CC + BB[0,1] * EE) + mm*gg*np.cos(alfa-theta)/VV**2) / (mm)
-    # fx[0,1] = dt*(((rho*(xx[0]**2)*(BB[0,0]*uu[1] + BB[0,1]*uu[2]))/2 - gg*mm*np.cos(xx[1] - xx[2]) + (CL*rho*(xx[0]**2))/2 +
-    # (CT*rho*uu[0]*(xx[0]**2)*np.sin(xx[1]))/2)/(mm*(xx[0]**2)) - (CL*rho*xx[0] + rho*xx[0]*(BB[0,0]*uu[1] + BB[0,1]*uu[2]) + CT*rho*uu[0]*xx[0]*np.sin(xx[1]))/(mm*xx[0]))
     fx[1,1] = 1 - dt * (0.5 * VV * rho * CT *TT * np.cos(alfa) - (1/VV)*mm*gg*np.sin(theta-alfa)) / (mm)
     fx[2,1] = dt * (-gg*np.sin(theta-alfa)) / (VV)
     fx[3,1] = dt
