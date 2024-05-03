@@ -77,22 +77,22 @@ if(plot):
     fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
     axs[0].plot(tt_hor, traj_ref[0,:], 'm--', linewidth=2)
-    axs[0].axhline(y=xx2[0], color='r', linestyle='--', linewidth=1)
+    #axs[0].axhline(y=xx2[0], color='r', linestyle='--', linewidth=1)
     axs[0].grid()
     axs[0].set_ylabel('$V$', rotation=0)
 
     axs[1].plot(tt_hor, traj_ref[1,:], 'm--', linewidth=2) 
-    axs[1].axhline(y=xx2[1], color='r', linestyle='--', linewidth=1)
+    #axs[1].axhline(y=xx2[1], color='r', linestyle='--', linewidth=1)
     axs[1].grid()
     axs[1].set_ylabel('$\\alpha$', rotation=0)
 
     axs[2].plot(tt_hor, traj_ref[2,:], 'm--', linewidth=2)
-    axs[2].axhline(y=xx2[2], color='r', linestyle='--', linewidth=1)
+    #axs[2].axhline(y=xx2[2], color='r', linestyle='--', linewidth=1)
     axs[2].grid()
     axs[2].set_ylabel('$\\theta$', rotation=0)
 
     axs[3].plot(tt_hor, traj_ref[3,:], 'm--', linewidth=2)
-    axs[3].axhline(y=xx2[3], color='r', linestyle='--', linewidth=1)
+    #axs[3].axhline(y=xx2[3], color='r', linestyle='--', linewidth=1)
     axs[3].grid()
     axs[3].set_ylabel('$q$', rotation=0)
 

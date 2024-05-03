@@ -22,7 +22,7 @@ c = 0.5
 beta = 0.7
 armijo_maxiters = 20    # number of Armijo iterations
 stepsize_0 = 1          # initial stepsize
-armijo_plt = 1
+armijo_plt = 0          # plot Armijo
 
 # Import the cost matrices from costs
 Qt = cst.QQt

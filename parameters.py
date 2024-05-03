@@ -14,7 +14,7 @@ verify_jacobian = 0
 dt = 1e-3
 
 # Define time steps
-num_steps = 20000
+num_steps = 18000
 time = np.arange(0, num_steps * dt, dt)
 
 # Model parameters

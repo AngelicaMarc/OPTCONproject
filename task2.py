@@ -36,7 +36,7 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-max_iters = 2
+max_iters = 10
 
 # Import equilibrium points
 
@@ -199,7 +199,7 @@ axs[3].grid()
 axs[3].set_ylabel('$q$')
 
 axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
-axs[4].plot(tt_hor, uu_ref[0,:], 'm--', linewidth=2)
+axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
 axs[4].grid()
 axs[4].set_ylabel('$\delta_c$')
 
