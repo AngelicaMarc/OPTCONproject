@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import parameters as param
 import newton as nwt
 import math
+import cost as cst
 
 def sigmoid(x):
-
     if x >= 0:
         z = math.exp(-x)
         sig = 1 / (1 + z)
@@ -36,7 +36,9 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-max_iters = 10
+max_iters = 5
+
+Task3 = True
 
 # Import equilibrium points
 
@@ -228,3 +230,129 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
+
+if Task3 == True:
+
+  A_opt = np.zeros((ns, ns, ts))
+  B_opt = np.zeros((ns, ni, ts))
+  Qt_reg = np.zeros((ns, ns, ts))
+  Rt_reg = np.zeros((ni, ni, ts))
+
+  for tt in range (ts):
+    fx, fu = param.jacobian(xx_star[:,tt], uu_star[:,tt])
+
+    A_opt[:,:,tt] = fx.T
+    B_opt[:,:,tt] = fu.T
+
+    Qt_reg[:,:,tt] = cst.QQt
+    Rt_reg[:,:,tt] = cst.RRt
+
+  QT_reg = cst.QQT
+
+
+  def lti_LQR(AA, BB, QQ, RR, QQf, ts):
+        
+    ns = AA.shape[1]
+    ni = BB.shape[1]
+
+    PP = np.zeros((ns,ns,ts))
+    KK = np.zeros((ni,ns,ts))
+    
+    PP[:,:,-1] = QQf
+    
+    # Solve Riccati equation
+    for tt in reversed(range(ts-1)):
+      QQt = QQ[:,:,tt]
+      RRt = RR[:,:,tt]
+      AAt = AA[:,:,tt]
+      BBt = BB[:,:,tt]
+      PPtp = PP[:,:,tt+1]
+      
+      PP[:,:,tt] = QQt + AAt.T@PPtp@AAt - (AAt.T@PPtp@BBt)@np.linalg.inv((RRt + BBt.T@PPtp@BBt))@(BBt.T@PPtp@AAt)
+    
+    # Evaluate KK
+    for tt in range(ts-1):
+      QQt = QQ[:,:,tt]
+      RRt = RR[:,:,tt]
+      AAt = AA[:,:,tt]
+      BBt = BB[:,:,tt]
+      PPtp = PP[:,:,tt+1]
+      
+      KK[:,:,tt] = -np.linalg.inv(RRt + BBt.T@PPtp@BBt)@(BBt.T@PPtp@AAt)
+
+    return KK
+      
+  KK_reg = lti_LQR(A_opt, B_opt, Qt_reg, Rt_reg, QT_reg, ts)
+
+  xx_temp = np.zeros((ns,ts))
+  uu_temp = np.zeros((ni,ts))
+
+  xx_temp[:,0] = np.array((700,0.2,0,0))      # initial conditions different from the ones of xx0_star 
+
+
+  for tt in range(ts-1):
+    uu_temp[:,tt] = uu_star[:,tt] + KK_reg[:,:,tt]@(xx_temp[:,tt]-xx_star[:,tt])
+    xx_temp[:,tt+1] = param.dynamics(xx_temp[:,tt], uu_temp[:,tt])
+
+  xx_reg = xx_temp
+  uu_reg = uu_temp
+  uu_reg[:,-1] = uu_reg[:,-2]        # for plotting purposes
+
+  ##############################################################
+  # Design REGULARIZED TRAJECTORY  
+  ##############################################################
+
+  fig, axs = plt.subplots(ns+ni, 1, sharex='all')
+
+  axs[0].plot(tt_hor, xx_reg[0,:], linewidth=2)
+  axs[0].plot(tt_hor, xx_star[0,:], 'm--', linewidth=2)
+  axs[0].grid()
+  axs[0].set_ylabel('$V$')
+
+  axs[1].plot(tt_hor, xx_reg[1,:], linewidth=2)
+  axs[1].plot(tt_hor, xx_star[1,:], 'm--', linewidth=2)
+  axs[1].grid()
+  axs[1].set_ylabel('$alpha$')
+
+  axs[2].plot(tt_hor, xx_reg[2,:], linewidth=2)
+  axs[2].plot(tt_hor, xx_star[2,:], 'm--', linewidth=2)
+  axs[2].grid()
+  axs[2].set_ylabel('$theta$')
+
+  axs[3].plot(tt_hor, xx_reg[3,:], linewidth=2)
+  axs[3].plot(tt_hor, xx_star[3,:], 'm--', linewidth=2)
+  axs[3].grid()
+  axs[3].set_ylabel('$q$')
+
+  axs[4].plot(tt_hor, uu_reg[0,:], 'g', linewidth=2)
+  axs[4].plot(tt_hor, uu_star[0,:], 'm--', linewidth=2)
+  axs[4].grid()
+  axs[4].set_ylabel('$delta_t$')
+
+  axs[5].plot(tt_hor, uu_reg[1,:],'g', linewidth=2)
+  axs[5].plot(tt_hor, uu_star[1,:], 'm--', linewidth=2)
+  axs[5].grid()
+  axs[5].set_ylabel('$delta_c$')
+  axs[5].set_xlabel('time')
+  
+  axs[6].plot(tt_hor, uu_reg[2,:],'g', linewidth=2)
+  axs[6].plot(tt_hor, uu_star[2,:], 'm--', linewidth=2)
+  axs[6].grid()
+  axs[6].set_ylabel('$delta_e$')
+  
+  axs[6].set_xlabel('time')
+  
+  fig.suptitle("Trajectory tracking via LQR")
+  plt.show()
+
+  # Plotting the trajectory
+  plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+  plt.plot(xx_reg[0,:]*np.cos(xx_reg[2,:]-xx_reg[1,:]), xx_reg[0,:]*np.sin(xx_reg[2,:]-xx_reg[1,:]),'m--', label='Regularized Trajectory')
+  plt.title('Airplane Trajectory')
+  plt.xlabel('X-axis')
+  plt.ylabel('Y-axis')
+  plt.legend()
+  plt.grid(True)
+  plt.show()
+
+    
