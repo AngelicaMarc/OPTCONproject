@@ -5,6 +5,10 @@ import newton as nwt
 import math
 import cost as cst
 
+step = param.dt
+num = param.num_steps
+stretch = 2*step*num*0.001
+
 def sigmoid(x):
     if x >= 0:
         z = math.exp(-x)
@@ -15,7 +19,7 @@ def sigmoid(x):
         sig = z / (1 + z)
         return sig
 
-def custom_sigmoid(x, lower, upper, stretch_factor, translation_factor):
+def custom_sigmoid(x, lower, upper, translation_factor, stretch_factor=stretch):
     scaled_x = (x - translation_factor) * stretch_factor
     sig = sigmoid(scaled_x)
     cust = lower + (upper - lower) * sig
@@ -36,7 +40,7 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-max_iters = 5
+max_iters = 10
 
 Task3 = True
 
@@ -79,11 +83,11 @@ for tt in range(1,ts):
             traj_ref[:ns, tt] = xx2
         else:
             for ii in range(0, ns-1):
-                traj_ref[ii, tt] = custom_sigmoid(tt, xx1[ii], xx2[ii], 0.001, tm)
+                traj_ref[ii, tt] = custom_sigmoid(tt, xx1[ii], xx2[ii], tm)
             for jj in range(1, ni):
-                traj_ref[4, tt] = custom_sigmoid(tt, uu1[0], uu2[0], 0.001, tm)
-                traj_ref[5, tt] = custom_sigmoid(tt, uu1[1], uu2[1], 0.001, tm)
-                traj_ref[6, tt] = custom_sigmoid(tt, uu1[2], uu2[2], 0.001, tm)
+                traj_ref[4, tt] = custom_sigmoid(tt, uu1[0], uu2[0], tm)
+                traj_ref[5, tt] = custom_sigmoid(tt, uu1[1], uu2[1], tm)
+                traj_ref[6, tt] = custom_sigmoid(tt, uu1[2], uu2[2], tm)
 
 
 print(f"final state: {traj_ref[:ns,ts-1]}")
@@ -97,40 +101,38 @@ if(plot):
 
     fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
-    axs[0].plot(tt_hor, traj_ref[0,:], 'm--', linewidth=2)
+    axs[0].plot(tt_hor, traj_ref[0,:], color='b', linewidth=2)
     #axs[0].axhline(y=xx2[0], color='r', linestyle='--', linewidth=1)
     axs[0].grid()
     axs[0].set_ylabel('$V$', rotation=0)
 
-    axs[1].plot(tt_hor, traj_ref[1,:], 'm--', linewidth=2) 
+    axs[1].plot(tt_hor, traj_ref[1,:], color='b', linewidth=2) 
     #axs[1].axhline(y=xx2[1], color='r', linestyle='--', linewidth=1)
     axs[1].grid()
     axs[1].set_ylabel('$\\alpha$', rotation=0)
 
-    axs[2].plot(tt_hor, traj_ref[2,:], 'm--', linewidth=2)
+    axs[2].plot(tt_hor, traj_ref[2,:], color='b', linewidth=2)
     #axs[2].axhline(y=xx2[2], color='r', linestyle='--', linewidth=1)
     axs[2].grid()
     axs[2].set_ylabel('$\\theta$', rotation=0)
 
-    axs[3].plot(tt_hor, traj_ref[3,:], 'm--', linewidth=2)
+    axs[3].plot(tt_hor, traj_ref[3,:], color='b', linewidth=2)
     #axs[3].axhline(y=xx2[3], color='r', linestyle='--', linewidth=1)
     axs[3].grid()
     axs[3].set_ylabel('$q$', rotation=0)
 
-    axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
-    
+    axs[4].plot(tt_hor, traj_ref[4,:], color='r', linewidth=2)
     axs[4].grid()
     axs[4].set_ylabel('$\delta_t$', rotation=0)
 
-    axs[5].plot(tt_hor, traj_ref[5,:], 'm--', linewidth=2)
-
+    axs[5].plot(tt_hor, traj_ref[5,:], color='r', linewidth=2)
     axs[5].grid()
     axs[5].set_ylabel('$\delta_c$', rotation=0)
 
-    axs[6].plot(tt_hor, traj_ref[6,:], 'm--', linewidth=2)
-
+    axs[6].plot(tt_hor, traj_ref[6,:], color='r', linewidth=2)
     axs[6].grid()
     axs[6].set_ylabel('$\delta_e$', rotation=0)
+
     axs[6].set_xlabel('Time')
 
     fig.suptitle("Reference")
@@ -339,7 +341,7 @@ if Task3 == True:
   axs[6].plot(tt_hor, uu_star[2,:], 'm--', linewidth=2)
   axs[6].grid()
   axs[6].set_ylabel('$delta_e$')
-  
+
   axs[6].set_xlabel('time')
   
   fig.suptitle("Trajectory tracking via LQR")
