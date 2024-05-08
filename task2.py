@@ -1,6 +1,8 @@
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib.image as mpimg
 import parameters as param
 import newton as nwt
 import math
@@ -362,17 +364,25 @@ if Task3:
   
   if Task5:
     
-
-    fig, ax = plt.subplots()
+     # Load the image
+    img = mpimg.imread('aggiungere path img')
+    fig, ax = plt.subplots(figsize=(10, 8))  
     
     def animate(i):
-      ax.clear()
-      ax.plot(xx_reg[0,:i+1]*np.cos(xx_reg[2,:i+1]-xx_reg[1,:i+1]), xx_reg[0,:i+1]*np.sin(xx_reg[2,:i+1]-xx_reg[1,:i+1]), 'm-', linewidth=2)
-      ax.set_title('Airplane Trajectory')
-      ax.set_xlabel('X-axis')
-      ax.set_ylabel('Y-axis')
-      ax.grid(True)
-      
+        ax.clear()
+        ax.plot(xx_reg[0,:i+1]*np.cos(xx_reg[2,:i+1]-xx_reg[1,:i+1]), xx_reg[0,:i+1]*np.sin(xx_reg[2,:i+1]-xx_reg[1,:i+1]), 'm-', linewidth=2)
+        ax.set_title('Airplane Trajectory')
+        ax.set_xlabel('X-axis')
+        ax.set_ylabel('Y-axis')
+        ax.grid(True)
+        
+        last_x = xx_reg[0,i]
+        last_y = xx_reg[0,i]*np.sin(xx_reg[2,i]-xx_reg[1,i])
+        
+        # Prova per resize
+       # resized_img = cv2.resize(img, (500, 500),interpolation=cv2.INTER_NEAREST) 
+        img_extent = [last_x - 50, last_x + 50, last_y - 50, last_y + 50] 
+        ax.imshow(img, extent=img_extent, aspect='auto')
 
     ani = animation.FuncAnimation(fig, animate, frames=ts, interval=0.25)
     plt.show()
