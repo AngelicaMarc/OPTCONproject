@@ -11,10 +11,10 @@ plot = 0
 verify_jacobian = 0
 
 # discretization step
-dt = 1e-3
+dt = 1e-2
 
 # Define time steps
-num_steps = 18000
+num_steps = 1000
 time = np.arange(0, num_steps * dt, dt)
 
 # Model parameters
