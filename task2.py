@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import parameters as param
 import newton as nwt
 import math
@@ -12,8 +13,9 @@ plot = 1
 
 max_iters = 5
 
-Task3 = False
-Task4 = True
+Task3 = True
+Task4 = False
+Task5 = True
 
 # Import model parameters
 
@@ -139,6 +141,7 @@ if(plot):
     fig.align_ylabels(axs)
 
     plt.show()
+    
 
 # Newton
 
@@ -233,7 +236,7 @@ plt.grid(True)
 plt.show()
 
 
-if Task3 == True:
+if Task3:
 
   A_opt = np.zeros((ns, ns, ts))
   B_opt = np.zeros((ns, ni, ts))
@@ -289,7 +292,7 @@ if Task3 == True:
   xx_temp = np.zeros((ns,ts))
   uu_temp = np.zeros((ni,ts))
 
-  xx_temp[:,0] = np.array((580,-0.01,0.01,0))      # initial conditions different from the ones of xx0_star 
+  xx_temp[:,0] = np.array((580,0.01,0.01,0))      # initial conditions different from the ones of xx0_star 
 
 
   for tt in range(ts-1):
@@ -356,8 +359,26 @@ if Task3 == True:
   plt.legend()
   plt.grid(True)
   plt.show()
+  
+  if Task5:
+    
 
-if Task4 == True:
+    fig, ax = plt.subplots()
+    
+    def animate(i):
+      ax.clear()
+      ax.plot(xx_reg[0,:i+1]*np.cos(xx_reg[2,:i+1]-xx_reg[1,:i+1]), xx_reg[0,:i+1]*np.sin(xx_reg[2,:i+1]-xx_reg[1,:i+1]), 'm-', linewidth=2)
+      ax.set_title('Airplane Trajectory')
+      ax.set_xlabel('X-axis')
+      ax.set_ylabel('Y-axis')
+      ax.grid(True)
+      
+
+    ani = animation.FuncAnimation(fig, animate, frames=ts, interval=0.25)
+    plt.show()
+     
+
+if Task4:
 
   Tsim = ts
   
