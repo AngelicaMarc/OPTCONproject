@@ -10,7 +10,7 @@ import cost as cst
 import cvxpy as cp
 
 # Plot the equilibrium points
-plot = 1
+plot = 0
 ##############
 
 max_iters = 5
@@ -99,10 +99,11 @@ print(f"final state: {traj_ref[:ns,ts-1]}")
 xx_ref = traj_ref[0:ns,:]
 uu_ref = traj_ref[ns:,:]
 
+tt_hor = np.linspace(0,tf,ts)
+
 if(plot):
     # Plot of the reference trajectories
-    tt_hor = np.linspace(0,tf,ts)
-
+    
     fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
     axs[0].plot(tt_hor, traj_ref[0,:], color='b', linewidth=2)
@@ -164,78 +165,78 @@ uu_star = uu[:,:,kk]
 uu_star[:,-1] = uu_star[:,-2]        # for plotting purposes
 
 # Plots of descent direction and cost
+if(plot):
+  plt.figure('descent direction')
+  plt.plot(np.arange(kk), descent[:kk])
+  plt.xlabel('$k$')
+  plt.ylabel('||$\\nabla J(\\mathbf{u}^k)||$')
+  plt.yscale('log')
+  plt.grid()
+  plt.show(block=False)
 
-plt.figure('descent direction')
-plt.plot(np.arange(kk), descent[:kk])
-plt.xlabel('$k$')
-plt.ylabel('||$\\nabla J(\\mathbf{u}^k)||$')
-plt.yscale('log')
-plt.grid()
-plt.show(block=False)
-
-plt.figure('cost')
-plt.plot(np.arange(kk), JJ[:kk])
-plt.xlabel('$k$')
-plt.ylabel('$J(\\mathbf{u}^k)$')
-plt.yscale('log')
-plt.grid()
-plt.show(block=False)
+  plt.figure('cost')
+  plt.plot(np.arange(kk), JJ[:kk])
+  plt.xlabel('$k$')
+  plt.ylabel('$J(\\mathbf{u}^k)$')
+  plt.yscale('log')
+  plt.grid()
+  plt.show(block=False)
 
 ##############################################################
 # Design OPTIMAL TRAJECTORY  
 ##############################################################
+if(plot):
+  fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
-fig, axs = plt.subplots(ns+ni, 1, sharex='all')
+  axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
+  axs[0].plot(tt_hor, xx_ref[0,:], 'm--', linewidth=2)
+  axs[0].grid()
+  axs[0].set_ylabel('$V$')
 
-axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
-axs[0].plot(tt_hor, xx_ref[0,:], 'm--', linewidth=2)
-axs[0].grid()
-axs[0].set_ylabel('$V$')
+  axs[1].plot(tt_hor, xx_star[1,:], linewidth=2)
+  axs[1].plot(tt_hor, xx_ref[1,:], 'm--', linewidth=2)
+  axs[1].grid()
+  axs[1].set_ylabel('$\\alpha$')
 
-axs[1].plot(tt_hor, xx_star[1,:], linewidth=2)
-axs[1].plot(tt_hor, xx_ref[1,:], 'm--', linewidth=2)
-axs[1].grid()
-axs[1].set_ylabel('$\\alpha$')
+  axs[2].plot(tt_hor, xx_star[2,:], linewidth=2)
+  axs[2].plot(tt_hor, xx_ref[2,:], 'm--', linewidth=2)
+  axs[2].grid()
+  axs[2].set_ylabel('$\\theta$')
 
-axs[2].plot(tt_hor, xx_star[2,:], linewidth=2)
-axs[2].plot(tt_hor, xx_ref[2,:], 'm--', linewidth=2)
-axs[2].grid()
-axs[2].set_ylabel('$\\theta$')
+  axs[3].plot(tt_hor, xx_star[3,:], linewidth=2)
+  axs[3].plot(tt_hor, xx_ref[3,:], 'm--', linewidth=2)
+  axs[3].grid()
+  axs[3].set_ylabel('$q$')
 
-axs[3].plot(tt_hor, xx_star[3,:], linewidth=2)
-axs[3].plot(tt_hor, xx_ref[3,:], 'm--', linewidth=2)
-axs[3].grid()
-axs[3].set_ylabel('$q$')
+  axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
+  axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
+  axs[4].grid()
+  axs[4].set_ylabel('$\delta_c$')
 
-axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
-axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
-axs[4].grid()
-axs[4].set_ylabel('$\delta_c$')
+  axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
+  axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
+  axs[5].grid()
+  axs[5].set_ylabel('$\delta_m$')
 
-axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
-axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
-axs[5].grid()
-axs[5].set_ylabel('$\delta_m$')
+  axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
+  axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
+  axs[6].grid()
+  axs[6].set_ylabel('$\delta_e$')
 
-axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
-axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
-axs[6].grid()
-axs[6].set_ylabel('$\delta_e$')
+  axs[6].set_xlabel('time')
+      
+  plt.show()
 
-axs[6].set_xlabel('time')
-    
-plt.show()
+  # Plotting the trajectory
 
-# Plotting the trajectory
-
-plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
-plt.title('Airplane Trajectory')
-plt.xlabel('X-axis')
-plt.ylabel('Y-axis')
-plt.legend()
-plt.grid(True)
-plt.show()
+  plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+  plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
+  plt.title('Airplane Trajectory')
+  plt.xlabel('X-axis')
+  plt.ylabel('Y-axis')
+  plt.legend()
+  plt.grid(True)
+  plt.show()
 
 
 if Task3:
@@ -308,83 +309,96 @@ if Task3:
   ##############################################################
   # Design REGULARIZED TRAJECTORY  
   ##############################################################
+  if(plot):
+    fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
-  fig, axs = plt.subplots(ns+ni, 1, sharex='all')
+    axs[0].plot(tt_hor, xx_reg[0,:], linewidth=2)
+    axs[0].plot(tt_hor, xx_star[0,:], 'm--', linewidth=2)
+    axs[0].grid()
+    axs[0].set_ylabel('$V$')
 
-  axs[0].plot(tt_hor, xx_reg[0,:], linewidth=2)
-  axs[0].plot(tt_hor, xx_star[0,:], 'm--', linewidth=2)
-  axs[0].grid()
-  axs[0].set_ylabel('$V$')
+    axs[1].plot(tt_hor, xx_reg[1,:], linewidth=2)
+    axs[1].plot(tt_hor, xx_star[1,:], 'm--', linewidth=2)
+    axs[1].grid()
+    axs[1].set_ylabel('$alpha$')
 
-  axs[1].plot(tt_hor, xx_reg[1,:], linewidth=2)
-  axs[1].plot(tt_hor, xx_star[1,:], 'm--', linewidth=2)
-  axs[1].grid()
-  axs[1].set_ylabel('$alpha$')
+    axs[2].plot(tt_hor, xx_reg[2,:], linewidth=2)
+    axs[2].plot(tt_hor, xx_star[2,:], 'm--', linewidth=2)
+    axs[2].grid()
+    axs[2].set_ylabel('$theta$')
 
-  axs[2].plot(tt_hor, xx_reg[2,:], linewidth=2)
-  axs[2].plot(tt_hor, xx_star[2,:], 'm--', linewidth=2)
-  axs[2].grid()
-  axs[2].set_ylabel('$theta$')
+    axs[3].plot(tt_hor, xx_reg[3,:], linewidth=2)
+    axs[3].plot(tt_hor, xx_star[3,:], 'm--', linewidth=2)
+    axs[3].grid()
+    axs[3].set_ylabel('$q$')
 
-  axs[3].plot(tt_hor, xx_reg[3,:], linewidth=2)
-  axs[3].plot(tt_hor, xx_star[3,:], 'm--', linewidth=2)
-  axs[3].grid()
-  axs[3].set_ylabel('$q$')
+    axs[4].plot(tt_hor, uu_reg[0,:], 'g', linewidth=2)
+    axs[4].plot(tt_hor, uu_star[0,:], 'm--', linewidth=2)
+    axs[4].grid()
+    axs[4].set_ylabel('$delta_t$')
 
-  axs[4].plot(tt_hor, uu_reg[0,:], 'g', linewidth=2)
-  axs[4].plot(tt_hor, uu_star[0,:], 'm--', linewidth=2)
-  axs[4].grid()
-  axs[4].set_ylabel('$delta_t$')
+    axs[5].plot(tt_hor, uu_reg[1,:],'g', linewidth=2)
+    axs[5].plot(tt_hor, uu_star[1,:], 'm--', linewidth=2)
+    axs[5].grid()
+    axs[5].set_ylabel('$delta_c$')
+    axs[5].set_xlabel('time')
+    
+    axs[6].plot(tt_hor, uu_reg[2,:],'g', linewidth=2)
+    axs[6].plot(tt_hor, uu_star[2,:], 'm--', linewidth=2)
+    axs[6].grid()
+    axs[6].set_ylabel('$delta_e$')
 
-  axs[5].plot(tt_hor, uu_reg[1,:],'g', linewidth=2)
-  axs[5].plot(tt_hor, uu_star[1,:], 'm--', linewidth=2)
-  axs[5].grid()
-  axs[5].set_ylabel('$delta_c$')
-  axs[5].set_xlabel('time')
-  
-  axs[6].plot(tt_hor, uu_reg[2,:],'g', linewidth=2)
-  axs[6].plot(tt_hor, uu_star[2,:], 'm--', linewidth=2)
-  axs[6].grid()
-  axs[6].set_ylabel('$delta_e$')
+    axs[6].set_xlabel('time')
+    
+    fig.suptitle("Trajectory tracking via LQR")
+    plt.show()
 
-  axs[6].set_xlabel('time')
-  
-  fig.suptitle("Trajectory tracking via LQR")
-  plt.show()
-
-  # Plotting the trajectory
-  plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-  plt.plot(xx_reg[0,:]*np.cos(xx_reg[2,:]-xx_reg[1,:]), xx_reg[0,:]*np.sin(xx_reg[2,:]-xx_reg[1,:]),'m--', label='Regularized Trajectory')
-  plt.title('Airplane Trajectory')
-  plt.xlabel('X-axis')
-  plt.ylabel('Y-axis')
-  plt.legend()
-  plt.grid(True)
-  plt.show()
+    # Plotting the trajectory
+    plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+    plt.plot(xx_reg[0,:]*np.cos(xx_reg[2,:]-xx_reg[1,:]), xx_reg[0,:]*np.sin(xx_reg[2,:]-xx_reg[1,:]),'m--', label='Regularized Trajectory')
+    plt.title('Airplane Trajectory')
+    plt.xlabel('X-axis')
+    plt.ylabel('Y-axis')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
   
   if Task5:
     
      # Load the image
-    img = mpimg.imread('aggiungere path img')
+    img = mpimg.imread('airplane_039.jpg')
     fig, ax = plt.subplots(figsize=(10, 8))  
     
     def animate(i):
         ax.clear()
-        ax.plot(xx_reg[0,:i+1]*np.cos(xx_reg[2,:i+1]-xx_reg[1,:i+1]), xx_reg[0,:i+1]*np.sin(xx_reg[2,:i+1]-xx_reg[1,:i+1]), 'm-', linewidth=2)
+        ax.plot(xx_reg[0,:i+1]*np.cos(xx_reg[2,:i+1]-xx_reg[1,:i+1]), xx_reg[0,:i+1]*np.sin(xx_reg[2,:i+1]-xx_reg[1,:i+1]), '--', linewidth=2)
         ax.set_title('Airplane Trajectory')
         ax.set_xlabel('X-axis')
         ax.set_ylabel('Y-axis')
         ax.grid(True)
-        
         last_x = xx_reg[0,i]
         last_y = xx_reg[0,i]*np.sin(xx_reg[2,i]-xx_reg[1,i])
         
-        # Prova per resize
-       # resized_img = cv2.resize(img, (500, 500),interpolation=cv2.INTER_NEAREST) 
-        img_extent = [last_x - 50, last_x + 50, last_y - 50, last_y + 50] 
-        ax.imshow(img, extent=img_extent, aspect='auto')
+        resized_img = cv2.resize(img, (500, 500), dst=(30,30), interpolation=cv2.INTER_AREA)
+        img_extent = [last_x - 5, last_x + 5, last_y - 5, last_y + 5] 
 
-    ani = animation.FuncAnimation(fig, animate, frames=ts, interval=0.25)
+        dx = xx_reg[0,i+1]*np.cos(xx_reg[2,i+1]-xx_reg[1,i+1]) - xx_reg[0,i]*np.cos(xx_reg[2,i]-xx_reg[1,i])
+        dy = xx_reg[0,i+1]*np.sin(xx_reg[2,i+1]-xx_reg[1,i+1]) - xx_reg[0,i]*np.sin(xx_reg[2,i]-xx_reg[1,i])
+        temp_angle = angle = np.arctan2(dy, dx) * 180 / np.pi
+        angle = temp_angle -45
+        # Get the dimensions of the image
+        height, width = resized_img.shape[:2]
+
+        # Calculate the rotation matrix
+        rotation_matrix = cv2.getRotationMatrix2D((width / 2, height / 2), angle, 1)
+
+        # Apply the rotation to the image
+        rotated_image = cv2.warpAffine(resized_img, rotation_matrix, (width, height))
+
+        ax.imshow(rotated_image, extent=img_extent, aspect='equal')
+        ax.plot(xx_reg[0,0], 0, 'ro', markersize=2)
+
+    ani = animation.FuncAnimation(fig, animate, frames=ts, interval=1)
     plt.show()
      
 
