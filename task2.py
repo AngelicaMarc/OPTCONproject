@@ -9,18 +9,16 @@ import math
 import cost as cst
 import cvxpy as cp
 
-# Plot the equilibrium points
-plot = 0
+##############
+plot = 1
+Task3 = True
+Task4 = False
+Task5 = True
+max_iters = 10
 ##############
 
 # Load the image
 img = mpimg.imread('airplane_039.jpg')
-
-max_iters = 5
-
-Task3 = True
-Task4 = True
-Task5 = False
 
 # Import model parameters
 
@@ -162,6 +160,7 @@ for tt in range(ts):
 x0 = np.copy(xx_ref[:,0])
 # xx, uu, descent, JJ, kk = grad.Gradient(xx, uu, xx_ref, uu_ref, cst.QQt, cst.RRt, cst.QQT, max_iters)
 xx, uu, descent, JJ, kk = nwt.Newton(xx, uu, xx_ref, uu_ref, x0, max_iters)
+print("Task 2 completed")
 
 xx_star = xx[:,:,kk]
 uu_star = uu[:,:,kk]
@@ -231,7 +230,7 @@ if(plot):
   plt.show()
 
   # Plotting the trajectory
-
+  
   plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
   plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
   plt.title('Airplane Trajectory')
@@ -298,7 +297,7 @@ if Task3:
   xx_temp = np.zeros((ns,ts))
   uu_temp = np.zeros((ni,ts))
 
-  xx_temp[:,0] = np.array((580,0.01,0.01,0))      # initial conditions different from the ones of xx0_star 
+  xx_temp[:,0] = np.array((580,0.2,0.1,0))      # initial conditions different from the ones of xx0_star 
 
 
   for tt in range(ts-1):
@@ -308,7 +307,7 @@ if Task3:
   xx_reg = xx_temp
   uu_reg = uu_temp
   uu_reg[:,-1] = uu_reg[:,-2]        # for plotting purposes
-
+  
   ##############################################################
   # Design REGULARIZED TRAJECTORY  
   ##############################################################
@@ -355,7 +354,8 @@ if Task3:
     
     fig.suptitle("Trajectory tracking via LQR")
     plt.show()
-
+    print("Task 3 completed")
+    
     # Plotting the trajectory
     plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
     plt.plot(xx_reg[0,:]*np.cos(xx_reg[2,:]-xx_reg[1,:]), xx_reg[0,:]*np.sin(xx_reg[2,:]-xx_reg[1,:]),'m--', label='Regularized Trajectory')
@@ -405,11 +405,10 @@ if Task3:
 if Task4:
 
   Tsim = ts
-  
   A_opt = np.zeros((ns, ns, ts))
   B_opt = np.zeros((ns, ni, ts))
 
-  def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, umax, T_pred):
+  def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, thetamin, T_pred):
 
     xxt = xxt.squeeze()
     
@@ -423,7 +422,7 @@ if Task4:
       cost += cp.quad_form(xx_mpc[:,tt-tl] - xx_star[:,tt], QQ) + cp.quad_form(uu_mpc[:,tt-tl] - uu_star[:,tt], RR)
       constr += [xx_mpc[:,tt+1-tl] == AA[:,:,tt]@xx_mpc[:,tt-tl] + BB[:,:,tt]@uu_mpc[:,tt-tl],  # dynamics constraint
               # other max/min values constraint
-              uu_mpc[1,tt-tl] <= umax,
+              xx_mpc[0,tt+1-tl] >= 508, xx_mpc[0,tt+1-tl] <= 2032,  # V
               ]
 
     # sums problem objectives and concatenates constraints
@@ -437,14 +436,14 @@ if Task4:
     # Otherwise, problem.value is inf or -inf, respectively
       print("Infeasible problem! CHECK YOUR CONSTRAINTS!!!")
 
-    return uu_mpc[:,0].value, xx_mpc.value, uu_mpc.value
+    return xx_mpc.value, uu_mpc.value
 
   #############################
   # Model Predictive Control
   #############################
 
   T_pred = 5      # MPC Prediction horizon
-  u1max = 1250
+  thetamin = -0.1
 
   xx_real_mpc = np.zeros((ns,Tsim))
   uu_real_mpc = np.zeros((ni,Tsim))
@@ -470,7 +469,7 @@ if Task4:
       print('MPC:\t t = {:.1f} sec.'.format(tt*dt))
 
     if tt < Tsim-T_pred:
-      xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, cst.QQt, cst.RRt, tt, cst.QQT, xx_t_mpc, umax=u1max, T_pred = T_pred)[1:]
+      xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, cst.QQt, cst.RRt, tt, cst.QQT, xx_t_mpc, thetamin, T_pred = T_pred)
       
       uu_real_mpc[:,tt] = uu_mpc[:,0,tt]
       xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,tt], uu_real_mpc[:,tt])
