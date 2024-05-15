@@ -11,7 +11,7 @@ import cvxpy as cp
 
 ##############
 plot = 0
-max_iters = 10
+max_iters = 5
 ##############
 
 # Load the image
@@ -27,8 +27,12 @@ ts = param.num_steps       # number of time steps
 
 tf = ts * dt               # Final time in seconds
 tm = int(ts / 2)           # Middle time step
-
 stretch = 2*dt*ts*0.001    # For the sigmoid to work properly
+
+QQ = np.diag([0.001, 1000, 100, 0.001])     
+RR = np.diag([1.0, 100.0, 1.0]) # TO FIX alpha weight
+QQf = cst.QQT
+
 
 def sigmoid(x):
     if x >= 0:
@@ -147,7 +151,6 @@ for tt in range(ts):
     uu[:,tt,0] = np.copy(uu_ref[:,0]) 
 
 x0 = np.copy(xx_ref[:,0])
-# xx, uu, descent, JJ, kk = grad.Gradient(xx, uu, xx_ref, uu_ref, cst.QQt, cst.RRt, cst.QQT, max_iters)
 xx, uu, descent, JJ, kk = nwt.Newton(xx, uu, xx_ref, uu_ref, x0, max_iters)
 print("Task 2 completed")
 
@@ -226,7 +229,7 @@ if(plot):
   plt.grid(True)
   plt.show()
 
-# MPC
+# MPC - Task 4
 Tsim = ts
 A_opt = np.zeros((ns, ns, ts))
 B_opt = np.zeros((ns, ni, ts))
@@ -292,19 +295,21 @@ for tt in range(Tsim-1):
     print('MPC:\t t = {:.1f} sec.'.format(tt*dt))
 
   if tt < Tsim-T_pred:
-    xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, cst.QQt, cst.RRt, tt, cst.QQT, xx_t_mpc, thetamin, T_pred = T_pred)
+    xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, QQ, RR, tt, cst.QQT, xx_t_mpc, thetamin, T_pred = T_pred)
     
     uu_real_mpc[:,tt] = uu_mpc[:,0,tt]
     xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,tt], uu_real_mpc[:,tt])
 
   else:
+    #TO FIX
     uu_real_mpc[:,tt] = uu_mpc[:,tt-(Tsim-T_pred),Tsim-T_pred-1]
-    xx_real_mpc[:,tt+1] = param.dynamics(xx_mpc[:,tt-(Tsim-T_pred),Tsim-T_pred-1], uu_real_mpc[:,tt])
+    xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,Tsim-T_pred-1], uu_real_mpc[:,Tsim-T_pred-1])
 
 uu_real_mpc[:,-1] = uu_real_mpc[:,-2]        # for plotting purposes
 #######################################
 # Plots
 #######################################
+#print(xx_real_mpc)
 
 time = np.arange(Tsim)
 fig, axs = plt.subplots(ns+ni, 1, sharex='all')

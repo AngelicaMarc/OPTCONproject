@@ -9,6 +9,8 @@ import math
 import cost as cst
 import cvxpy as cp
 
+# TODO: Send the gradient to 1e-6
+
 ##############
 plot = 1
 max_iters = 5
@@ -185,6 +187,7 @@ if(plot):
 # Design OPTIMAL TRAJECTORY  
 ##############################################################
 if(plot):
+  
   fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
   axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
@@ -236,3 +239,4 @@ if(plot):
   plt.legend()
   plt.grid(True)
   plt.show()
+

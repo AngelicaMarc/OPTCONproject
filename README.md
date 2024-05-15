@@ -1,6 +1,17 @@
 # OPTCONproject
 This project deals with the design and implementation of an optimal control law for a supersonic aircraft with nonlinear drag and lift
 
+# TODO
+
+Gradient to 1e-6
+MPC: last T_pred instants
+Weight in cost matrices
+Fix animation
+Perturb initial condition
+Report
+Plots
+
+
  save (ctrl+s)
  git add .
  git commit -m "commit"
@@ -40,7 +51,7 @@ We use this function to update the state based on the control input.
 
 DEFINITION OF MATRICES Qt and Rt
 
-We've defined the matrices for linear quadratic optimal problem for the state stack and the input stack. We want high precision definition in state variables VV and alfa, so we use high numbers in matrices defined.
+We've defined the matrices for linear quadratic optimal problem for the state stack and the input stack. We want high precision definition in state variables VV and alfa, so we use high numbers in matrices defined. (wrong)
 
 COMPUTATION OF STAGE COST AND TERMINAL COST
 
