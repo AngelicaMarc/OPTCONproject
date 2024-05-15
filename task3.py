@@ -11,7 +11,8 @@ import cvxpy as cp
 
 ##############
 plot = 1
-max_iters = 5
+Task5 = True
+max_iters = 10
 ##############
 
 # Load the image
@@ -181,9 +182,7 @@ if(plot):
   plt.grid()
   plt.show(block=False)
 
-##############################################################
-# Design OPTIMAL TRAJECTORY  
-##############################################################
+
 if(plot):
   fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
@@ -235,4 +234,163 @@ if(plot):
   plt.ylabel('Y-axis')
   plt.legend()
   plt.grid(True)
+  plt.show()
+
+A_opt = np.zeros((ns, ns, ts))
+B_opt = np.zeros((ns, ni, ts))
+Qt_reg = np.zeros((ns, ns, ts))
+Rt_reg = np.zeros((ni, ni, ts))
+
+for tt in range (ts):
+  fx, fu = param.jacobian(xx_star[:,tt], uu_star[:,tt])
+
+  A_opt[:,:,tt] = fx.T
+  B_opt[:,:,tt] = fu.T
+
+  Qt_reg[:,:,tt] = cst.QQt
+  Rt_reg[:,:,tt] = cst.RRt
+
+QT_reg = cst.QQT
+
+
+def lti_LQR(AA, BB, QQ, RR, QQf, ts):
+      
+  ns = AA.shape[1]
+  ni = BB.shape[1]
+
+  PP = np.zeros((ns,ns,ts))
+  KK = np.zeros((ni,ns,ts))
+  
+  PP[:,:,-1] = QQf
+  
+  # Solve Riccati equation
+  for tt in reversed(range(ts-1)):
+    QQt = QQ[:,:,tt]
+    RRt = RR[:,:,tt]
+    AAt = AA[:,:,tt]
+    BBt = BB[:,:,tt]
+    PPtp = PP[:,:,tt+1]
+    
+    PP[:,:,tt] = QQt + AAt.T@PPtp@AAt - (AAt.T@PPtp@BBt)@np.linalg.inv((RRt + BBt.T@PPtp@BBt))@(BBt.T@PPtp@AAt)
+  
+  # Evaluate KK
+  for tt in range(ts-1):
+    QQt = QQ[:,:,tt]
+    RRt = RR[:,:,tt]
+    AAt = AA[:,:,tt]
+    BBt = BB[:,:,tt]
+    PPtp = PP[:,:,tt+1]
+    
+    KK[:,:,tt] = -np.linalg.inv(RRt + BBt.T@PPtp@BBt)@(BBt.T@PPtp@AAt)
+
+  return KK
+    
+KK_reg = lti_LQR(A_opt, B_opt, Qt_reg, Rt_reg, QT_reg, ts)
+
+xx_temp = np.zeros((ns,ts))
+uu_temp = np.zeros((ni,ts))
+
+
+xx_temp[:,0] = np.array((580,0.2,0.1,0))      # initial conditions different from the ones of xx0_star 
+
+
+for tt in range(ts-1):
+  uu_temp[:,tt] = uu_star[:,tt] + KK_reg[:,:,tt]@(xx_temp[:,tt]-xx_star[:,tt])
+  xx_temp[:,tt+1] = param.dynamics(xx_temp[:,tt], uu_temp[:,tt])
+
+xx_reg = xx_temp
+uu_reg = uu_temp
+uu_reg[:,-1] = uu_reg[:,-2]        # for plotting purposes
+
+
+if(plot):
+  fig, axs = plt.subplots(ns+ni, 1, sharex='all')
+
+  axs[0].plot(tt_hor, xx_reg[0,:], linewidth=2)
+  axs[0].plot(tt_hor, xx_star[0,:], 'm--', linewidth=2)
+  axs[0].grid()
+  axs[0].set_ylabel('$V$')
+
+  axs[1].plot(tt_hor, xx_reg[1,:], linewidth=2)
+  axs[1].plot(tt_hor, xx_star[1,:], 'm--', linewidth=2)
+  axs[1].grid()
+  axs[1].set_ylabel('$alpha$')
+
+  axs[2].plot(tt_hor, xx_reg[2,:], linewidth=2)
+  axs[2].plot(tt_hor, xx_star[2,:], 'm--', linewidth=2)
+  axs[2].grid()
+  axs[2].set_ylabel('$theta$')
+
+  axs[3].plot(tt_hor, xx_reg[3,:], linewidth=2)
+  axs[3].plot(tt_hor, xx_star[3,:], 'm--', linewidth=2)
+  axs[3].grid()
+  axs[3].set_ylabel('$q$')
+
+  axs[4].plot(tt_hor, uu_reg[0,:], 'g', linewidth=2)
+  axs[4].plot(tt_hor, uu_star[0,:], 'm--', linewidth=2)
+  axs[4].grid()
+  axs[4].set_ylabel('$delta_t$')
+
+  axs[5].plot(tt_hor, uu_reg[1,:],'g', linewidth=2)
+  axs[5].plot(tt_hor, uu_star[1,:], 'm--', linewidth=2)
+  axs[5].grid()
+  axs[5].set_ylabel('$delta_c$')
+  axs[5].set_xlabel('time')
+  
+  axs[6].plot(tt_hor, uu_reg[2,:],'g', linewidth=2)
+  axs[6].plot(tt_hor, uu_star[2,:], 'm--', linewidth=2)
+  axs[6].grid()
+  axs[6].set_ylabel('$delta_e$')
+
+  axs[6].set_xlabel('time')
+  
+  fig.suptitle("Trajectory tracking via LQR")
+  plt.show()
+  print("Task 3 completed")
+
+  # Plotting the trajectory
+  plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+  plt.plot(xx_reg[0,:]*np.cos(xx_reg[2,:]-xx_reg[1,:]), xx_reg[0,:]*np.sin(xx_reg[2,:]-xx_reg[1,:]),'m--', label='Regularized Trajectory')
+  plt.title('Airplane Trajectory')
+  plt.xlabel('X-axis')
+  plt.ylabel('Y-axis')
+  plt.legend()
+  plt.grid(True)
+  plt.show()
+  
+if Task5:
+  
+  fig, ax = plt.subplots(figsize=(10, 8))  
+  
+  def animate(i):
+      ax.clear()
+      ax.plot(xx_reg[0,:i+1]*np.cos(xx_reg[2,:i+1]-xx_reg[1,:i+1]), xx_reg[0,:i+1]*np.sin(xx_reg[2,:i+1]-xx_reg[1,:i+1]), '--', linewidth=2)
+      ax.set_title('Airplane Trajectory')
+      ax.set_xlabel('X-axis')
+      ax.set_ylabel('Y-axis')
+      ax.grid(True)
+      last_x = xx_reg[0,i]
+      last_y = xx_reg[0,i]*np.sin(xx_reg[2,i]-xx_reg[1,i])
+      
+      resized_img = cv2.resize(img, (500, 500), dst=(30,30), interpolation=cv2.INTER_AREA)
+      img_extent = [last_x - 5, last_x + 5, last_y - 5, last_y + 5] 
+
+      dx = xx_reg[0,i+1]*np.cos(xx_reg[2,i+1]-xx_reg[1,i+1]) - xx_reg[0,i]*np.cos(xx_reg[2,i]-xx_reg[1,i])
+      dy = xx_reg[0,i+1]*np.sin(xx_reg[2,i+1]-xx_reg[1,i+1]) - xx_reg[0,i]*np.sin(xx_reg[2,i]-xx_reg[1,i])
+      temp_angle = angle = np.arctan2(dy, dx) * 180 / np.pi
+      angle = temp_angle -45
+      # Get the dimensions of the image
+      height, width = resized_img.shape[:2]
+
+      # Calculate the rotation matrix
+      rotation_matrix = cv2.getRotationMatrix2D((width / 2, height / 2), angle, 1)
+
+      # Apply the rotation to the image
+      rotated_image = cv2.warpAffine(resized_img, rotation_matrix, (width, height))
+
+      ax.imshow(rotated_image, extent=img_extent, aspect='equal')
+      ax.plot(xx_reg[0,0], 0, 'ro', markersize=2)
+
+  ani = animation.FuncAnimation(fig, animate, frames=ts, interval=1)
+  print("Task 5 completed")
   plt.show()

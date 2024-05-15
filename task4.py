@@ -10,8 +10,8 @@ import cost as cst
 import cvxpy as cp
 
 ##############
-plot = 1
-max_iters = 5
+plot = 0
+max_iters = 10
 ##############
 
 # Load the image
@@ -69,13 +69,9 @@ traj_ref[:ns,0] = xx1
 traj_ref[ns:,0] = uu1
 
 print(f"initial state: {traj_ref[:ns,0]}")
-
 for tt in range(1,ts):
-
     # traj = param.dynamics(traj_ref[:ns,tt-1], traj_ref[ns:,tt-1],1)
-    
     # traj_ref[:ns, tt] = traj[:ns]  
-
     if tt < ts/8:
         traj_ref[ns:, tt] = uu1
         traj_ref[:ns, tt] = xx1 
@@ -90,8 +86,6 @@ for tt in range(1,ts):
                 traj_ref[4, tt] = custom_sigmoid(tt, uu1[0], uu2[0], tm)
                 traj_ref[5, tt] = custom_sigmoid(tt, uu1[1], uu2[1], tm)
                 traj_ref[6, tt] = custom_sigmoid(tt, uu1[2], uu2[2], tm)
-
-
 print(f"final state: {traj_ref[:ns,ts-1]}")
 
 xx_ref = traj_ref[0:ns,:]
@@ -143,9 +137,7 @@ if(plot):
 
     plt.show()
     
-
 # Newton
-
 xx = np.zeros((ns, ts, max_iters+1))   # state seq.
 uu = np.zeros((ni, ts, max_iters+1))   # input seq.
 
@@ -181,9 +173,6 @@ if(plot):
   plt.grid()
   plt.show(block=False)
 
-##############################################################
-# Design OPTIMAL TRAJECTORY  
-##############################################################
 if(plot):
   fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
@@ -236,3 +225,151 @@ if(plot):
   plt.legend()
   plt.grid(True)
   plt.show()
+
+# MPC
+Tsim = ts
+A_opt = np.zeros((ns, ns, ts))
+B_opt = np.zeros((ns, ni, ts))
+
+def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, thetamin, T_pred):
+
+  xxt = xxt.squeeze()
+  
+  xx_mpc = cp.Variable((ns, T_pred))
+  uu_mpc = cp.Variable((ni, T_pred))
+
+  cost = 0
+  constr = []
+  # Tsim-1-T_pred
+  for tt in range(tl, tl + T_pred -1):
+    cost += cp.quad_form(xx_mpc[:,tt-tl] - xx_star[:,tt], QQ) + cp.quad_form(uu_mpc[:,tt-tl] - uu_star[:,tt], RR)
+    constr += [xx_mpc[:,tt+1-tl] == AA[:,:,tt]@xx_mpc[:,tt-tl] + BB[:,:,tt]@uu_mpc[:,tt-tl],  # dynamics constraint
+            # other max/min values constraint
+            # xx_mpc[0,tt+1-tl] >= 508, xx_mpc[0,tt+1-tl] <= 2032,  # V
+            ]
+
+  # sums problem objectives and concatenates constraints
+  cost += cp.quad_form(xx_mpc[:,T_pred-1] - xx_star[:,tl+T_pred-1], QQf)
+  constr += [xx_mpc[:,0] == xxt]
+
+  problem = cp.Problem(cp.Minimize(cost), constr)
+  problem.solve()
+
+  if problem.status == "infeasible":
+  # Otherwise, problem.value is inf or -inf, respectively
+    print("Infeasible problem! CHECK YOUR CONSTRAINTS!!!")
+
+  return xx_mpc.value, uu_mpc.value
+
+#############################
+# Model Predictive Control
+#############################
+
+T_pred = 5      # MPC Prediction horizon
+thetamin = -0.1
+
+xx_real_mpc = np.zeros((ns,Tsim))
+uu_real_mpc = np.zeros((ni,Tsim))
+
+xx_mpc = np.zeros((ns, T_pred, Tsim))
+uu_mpc = np.zeros((ni, T_pred, Tsim))
+
+xx_real_mpc[:,0] = np.array((600,0.1,0,0))      # initial conditions different from the ones of xx0_star 
+
+for tt in range(Tsim-1):
+  # System evolution - real with MPC
+
+  xx_t_mpc = xx_real_mpc[:,tt]  # get initial condition
+  
+  fx, fu = param.jacobian(xx_star[:,tt], uu_star[:,tt])
+
+  A_opt[:,:,tt] = fx.T
+  B_opt[:,:,tt] = fu.T
+
+  # Solve MPC problem - apply first input
+
+  if tt%10 == 0: # print every 10 time instants
+    print('MPC:\t t = {:.1f} sec.'.format(tt*dt))
+
+  if tt < Tsim-T_pred:
+    xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, cst.QQt, cst.RRt, tt, cst.QQT, xx_t_mpc, thetamin, T_pred = T_pred)
+    
+    uu_real_mpc[:,tt] = uu_mpc[:,0,tt]
+    xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,tt], uu_real_mpc[:,tt])
+
+  else:
+    uu_real_mpc[:,tt] = uu_mpc[:,tt-(Tsim-T_pred),Tsim-T_pred-1]
+    xx_real_mpc[:,tt+1] = param.dynamics(xx_mpc[:,tt-(Tsim-T_pred),Tsim-T_pred-1], uu_real_mpc[:,tt])
+
+uu_real_mpc[:,-1] = uu_real_mpc[:,-2]        # for plotting purposes
+#######################################
+# Plots
+#######################################
+
+time = np.arange(Tsim)
+fig, axs = plt.subplots(ns+ni, 1, sharex='all')
+
+axs[0].plot(time, xx_real_mpc[0,:Tsim],'m', linewidth=2, label='MPC')
+axs[0].plot(time, xx_star[0,:Tsim],'--g', linewidth=2, label='Optimal')
+axs[0].grid()
+axs[0].set_ylabel('$V$')
+axs[0].set_xlim([-1,Tsim])
+
+#####
+axs[1].plot(time, xx_real_mpc[1,:Tsim],'m', linewidth=2, label='MPC')
+axs[1].plot(time, xx_star[1,:Tsim], '--g', linewidth=2, label='Optimal')
+axs[1].grid()
+axs[1].set_ylabel('$alpha$')
+axs[1].set_xlim([-1,Tsim])
+
+#####
+axs[2].plot(time, xx_real_mpc[2,:Tsim],'m', linewidth=2, label='MPC')
+axs[2].plot(time, xx_star[2,:Tsim], '--g', linewidth=2, label='Optimal')
+axs[2].grid()
+axs[2].set_ylabel('$theta$')
+axs[2].set_xlim([-1,Tsim])
+
+#####
+axs[3].plot(time, xx_real_mpc[3,:Tsim],'m', linewidth=2, label='MPC')
+axs[3].plot(time, xx_star[3,:Tsim], '--g', linewidth=2, label='Optimal')
+axs[3].grid()
+axs[3].set_ylabel('$q$')
+axs[3].set_xlim([-1,Tsim])
+
+#####
+axs[4].plot(time, uu_real_mpc[0,:Tsim],'m', linewidth=2, label='MPC')
+axs[4].plot(time, uu_star[0,:Tsim],'--g', linewidth=2, label='Optimal')
+axs[4].grid()
+axs[4].set_ylabel('$delta_t$')
+axs[4].set_xlim([-1,Tsim-T_pred])
+
+#####
+axs[5].plot(time, uu_real_mpc[1,:Tsim],'m', linewidth=2, label='MPC')
+axs[5].plot(time, uu_star[1,:Tsim],'--g', linewidth=2, label='Optimal')
+axs[5].grid()
+axs[5].set_ylabel('$delta_c$')
+axs[5].set_xlim([-1,Tsim])
+
+#####
+axs[6].plot(time, uu_real_mpc[2,:Tsim],'m', linewidth=2, label='MPC')
+axs[6].plot(time, uu_star[2,:Tsim],'--g', linewidth=2, label='Optimal')
+axs[6].grid()
+axs[6].set_ylabel('$delta_e$')
+axs[6].set_xlabel('time')
+axs[6].set_xlim([-1,Tsim])
+
+fig.align_ylabels(axs)
+
+plt.legend()
+plt.show()
+
+# Plotting the trajectory
+print("Task 4 completed")
+plt.plot(xx_real_mpc[0,:]*np.cos(xx_real_mpc[2,:]-xx_real_mpc[1,:]), xx_real_mpc[0,:]*np.sin(xx_real_mpc[2,:]-xx_real_mpc[1,:]), label='MPC Trajectory')
+plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]),'m--',label='Optimal Trajectory')
+plt.title('Airplane Trajectory')
+plt.xlabel('X-axis')
+plt.ylabel('Y-axis')
+plt.legend()
+plt.grid(True)
+plt.show()
