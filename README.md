@@ -3,8 +3,12 @@ This project deals with the design and implementation of an optimal control law 
 
 # TODO
 
-Gradient to 1e-6
-MPC: last T_pred instants
+Gradient to 1e-6 
+vector.copy()
+Errors in Jacobian
+Armijo Debug
+MPC: last T_pred instants: extend onto the second equilibria
+Plots: INTEGRATE velocity (forward euler?)
 Weight in cost matrices
 Fix animation
 Perturb initial condition
