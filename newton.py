@@ -15,7 +15,7 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-term_cond = 1e-6        #terminal condition
+term_cond = 1e-8        #terminal condition
 
 # ARMIJO PARAMETERS
 c = 0.5

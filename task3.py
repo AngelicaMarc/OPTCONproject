@@ -7,7 +7,8 @@ import parameters as param
 import newton as nwt
 import math
 import cost as cst
-import cvxpy as cp
+from scipy.optimize import fsolve
+import random
 
 ##############
 plot = 1
@@ -40,14 +41,29 @@ def sigmoid(x):
         z = math.exp(x)
         sig = z / (1 + z)
         return sig
-
 def custom_sigmoid(x, lower, upper, translation_factor, stretch_factor=stretch):
     scaled_x = (x - translation_factor) * stretch_factor
     sig = sigmoid(scaled_x)
     cust = lower + (upper - lower) * sig
     return cust
 
-# Import equilibrium points
+def func1(input):
+    result = param.dynamics(xx1, input[:3], 0)
+    return result 
+def func2(input):
+    result = param.dynamics(xx2, input[:3], 0)
+    return result 
+def find_equilibria(u_guess, type):
+    # Use fsolve to find the equilibria
+    inputs = np.append(u_guess, 0.0)
+    if type == 1:
+        equilibrium_inputs = fsolve(func1, inputs)
+    else:
+        equilibrium_inputs = fsolve(func2, inputs)
+    eq = equilibrium_inputs[:3]
+    return eq
+
+
 
 uu1 = np.zeros((ni))
 uu2 = np.zeros((ni))
@@ -57,11 +73,13 @@ xx2 = np.zeros((ns))
 uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
 
-uu1 = [0.30953803, -1.04573824, -0.28607073]
+#uu1 = [0.30953803, -1.04573824, -0.28607073]
 xx1 = [600, 0.1, 0, 0]
+uu1 = find_equilibria(uu0, 1)
 
-uu2 = [0.42612887, -0.35995701, -0.14891448 ]
-xx2 = [900, 0.1, 0.1, 0]
+#uu2 = [0.42612887, -0.35995701, -0.14891448 ]
+xx2 = [900, 0.1, 0.06, 0]
+uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
 
@@ -226,9 +244,28 @@ if(plot):
   plt.show()
 
   # Plotting the trajectory
+
+  # Definisci l'intervallo di campionamento temporale
+  delta_t = param.dt  # ad esempio, 0.1 secondi
+
+  # Calcola le velocità nei componenti x e y per entrambe le traiettorie
+  vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+  vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
+  vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
+  vy_ref = xx_ref[0, :] * np.sin(xx_ref[1, :] - xx_ref[2, :])
+
+  # Integra numericamente le velocità per ottenere le posizioni
+  x_star = np.cumsum(vx_star) * delta_t
+  y_star = np.cumsum(vy_star) * delta_t
+  x_ref = np.cumsum(vx_ref) * delta_t
+  y_ref = np.cumsum(vy_ref) * delta_t
+
+  # Traccia le traiettorie
+  plt.plot(x_star, y_star, label='Optimal Trajectory')
+  plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
   
-  plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-  plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
+  # plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+  # plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
   plt.title('Airplane Trajectory')
   plt.xlabel('X-axis')
   plt.ylabel('Y-axis')
@@ -291,7 +328,13 @@ xx_temp = np.zeros((ns,ts))
 uu_temp = np.zeros((ni,ts))
 
 
-xx_temp[:,0] = np.array((580,0.2,0.1,0))      # initial conditions different from the ones of xx0_star 
+def disturbance(x):
+    y = np.zeros((4))
+    for i in range(4):
+        y[i] = random.uniform(-0.05, 0.05)
+    return x + x*y
+
+xx_temp[:,0] = disturbance(xx1)     # initial conditions different from the ones of xx0_star 
 
 
 for tt in range(ts-1):
@@ -348,15 +391,29 @@ if(plot):
   plt.show()
   print("Task 3 completed")
 
-  # Plotting the trajectory
-  plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-  plt.plot(xx_reg[0,:]*np.cos(xx_reg[2,:]-xx_reg[1,:]), xx_reg[0,:]*np.sin(xx_reg[2,:]-xx_reg[1,:]),'m--', label='Regularized Trajectory')
-  plt.title('Airplane Trajectory')
-  plt.xlabel('X-axis')
-  plt.ylabel('Y-axis')
+  delta_t = param.dt  # ad esempio, 0.1 secondi
+
+  # Calcola le velocità nei componenti x e y per entrambe le traiettorie
+  vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+  vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
+  vx_reg = xx_reg[0, :] * np.cos(xx_reg[2, :] - xx_reg[1, :])
+  vy_reg = xx_reg[0, :] * np.sin(xx_reg[1, :] - xx_reg[2, :])
+
+  # Integra numericamente le velocità per ottenere le posizioni
+  x_star = np.cumsum(vx_star) * delta_t
+  y_star = np.cumsum(vy_star) * delta_t
+  x_reg = np.cumsum(vx_reg) * delta_t
+  y_reg = np.cumsum(vy_reg) * delta_t
+
+  # Traccia le traiettorie
+  plt.plot(x_star, y_star, label='Optimal Trajectory')
+  plt.plot(x_reg, y_reg, 'm--', label='Regularized Trajectory')
+  plt.xlabel('X position')
+  plt.ylabel('Y position')
   plt.legend()
-  plt.grid(True)
+  plt.title('Airplane Trajectories')
   plt.show()
+
   
 if Task5:
   

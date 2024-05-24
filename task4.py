@@ -1,17 +1,18 @@
-import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+from scipy.optimize import fsolve
 import matplotlib.image as mpimg
 import parameters as param
 import newton as nwt
 import math
 import cost as cst
 import cvxpy as cp
+import random
+
 
 ##############
 plot = 0
-max_iters = 5
+max_iters = 15
 ##############
 
 # Load the image
@@ -29,7 +30,7 @@ tf = ts * dt               # Final time in seconds
 tm = int(ts / 2)           # Middle time step
 stretch = 2*dt*ts*0.001    # For the sigmoid to work properly
 
-QQ = np.diag([0.001, 1000, 100, 0.001])     
+QQ = np.diag([0.001, 10000, 100, 0.001])     
 RR = np.diag([1.0, 100.0, 1.0]) # TO FIX alpha weight
 QQf = cst.QQT
 
@@ -60,11 +61,29 @@ xx2 = np.zeros((ns))
 uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
 
-uu1 = [0.30953803, -1.04573824, -0.28607073]
-xx1 = [600, 0.1, 0, 0]
+def func1(input):
+    result = param.dynamics(xx1, input[:3], 0)
+    return result 
+def func2(input):
+    result = param.dynamics(xx2, input[:3], 0)
+    return result 
+def find_equilibria(u_guess, type):
+    # Use fsolve to find the equilibria
+    inputs = np.append(u_guess, 0.0)
+    if type == 1:
+        equilibrium_inputs = fsolve(func1, inputs)
+    else:
+        equilibrium_inputs = fsolve(func2, inputs)
+    eq = equilibrium_inputs[:3]
+    return eq
 
-uu2 = [0.42612887, -0.35995701, -0.14891448 ]
-xx2 = [900, 0.1, 0.1, 0]
+#uu1 = [0.30953803, -1.04573824, -0.28607073]
+xx1 = [600, 0.1, 0, 0]
+uu1 = find_equilibria(uu0, 1)
+
+#uu2 = [0.42612887, -0.35995701, -0.14891448 ]
+xx2 = [900, 0.1, 0.06, 0]
+uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
 
@@ -277,7 +296,13 @@ uu_real_mpc = np.zeros((ni,Tsim))
 xx_mpc = np.zeros((ns, T_pred, Tsim))
 uu_mpc = np.zeros((ni, T_pred, Tsim))
 
-xx_real_mpc[:,0] = np.array((600,0.1,0,0))      # initial conditions different from the ones of xx0_star 
+def disturbance(x):
+    y = np.zeros((4))
+    for i in range(4):
+        y[i] = random.uniform(-0.1, 0.1)
+    return x + x*y
+
+xx_real_mpc[:,0] = disturbance(xx1)    # initial conditions different from the ones of xx0_star 
 
 for tt in range(Tsim-1):
   # System evolution - real with MPC
@@ -370,11 +395,54 @@ plt.show()
 
 # Plotting the trajectory
 print("Task 4 completed")
-plt.plot(xx_real_mpc[0,:]*np.cos(xx_real_mpc[2,:]-xx_real_mpc[1,:]), xx_real_mpc[0,:]*np.sin(xx_real_mpc[2,:]-xx_real_mpc[1,:]), label='MPC Trajectory')
-plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]),'m--',label='Optimal Trajectory')
-plt.title('Airplane Trajectory')
-plt.xlabel('X-axis')
-plt.ylabel('Y-axis')
+# plt.plot(xx_real_mpc[0,:]*np.cos(xx_real_mpc[2,:]-xx_real_mpc[1,:]), xx_real_mpc[0,:]*np.sin(xx_real_mpc[2,:]-xx_real_mpc[1,:]), label='MPC Trajectory')
+# plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]),'m--',label='Optimal Trajectory')
+# plt.title('Airplane Trajectory')
+# plt.xlabel('X-axis')
+# plt.ylabel('Y-axis')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
+
+# Define time interval
+delta_t = param.dt  # for example 0.1 seconds
+
+# Get the velocities in x and y
+vx_star = xx_star[0, :] * np.cos(-xx_star[2, :] + xx_star[1, :])
+vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
+vx_ref = xx_real_mpc[0, :] * np.cos(-xx_real_mpc[2, :] + xx_real_mpc[1, :])
+vy_ref = xx_real_mpc[0, :] * np.sin(xx_real_mpc[1, :] - xx_real_mpc[2, :])
+
+# Forward Euler: Integrate numerically the velocities to obtain the positions
+x_star = np.zeros_like(vx_star)
+x_star[0] = 0
+for i in range(1, len(vx_star)):
+    x_star[i] = x_star[i-1] + vx_star[i] * delta_t
+
+y_star = np.zeros_like(vy_star)
+y_star[0] = 0
+for i in range(1, len(vy_star)):
+    y_star[i] = y_star[i-1] + vy_star[i] * delta_t
+
+x_ref = np.zeros_like(vx_ref)
+x_ref[0] = 0
+for i in range(1, len(vx_ref)):
+    x_ref[i] = x_ref[i-1] + vx_ref[i] * delta_t
+
+y_ref = np.zeros_like(vy_ref)
+y_ref[0] = 0
+for i in range(1, len(vy_ref)):
+    y_ref[i] = y_ref[i-1] + vy_ref[i] * delta_t
+
+
+
+# Track trajectories
+plt.plot(x_star, y_star, label='Optimal Trajectory')
+plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
+plt.xlabel('X position')
+plt.ylabel('Y position')
 plt.legend()
-plt.grid(True)
+plt.title('Airplane Trajectories')
 plt.show()
+
+

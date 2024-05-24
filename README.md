@@ -3,17 +3,16 @@ This project deals with the design and implementation of an optimal control law 
 
 # TODO
 
-Gradient to 1e-6 
-vector.copy()
+#Gradient to 1e-6 non va sempre ma alle volte sì
+#vector.copy() non ce n'è
 Errors in Jacobian
 Armijo Debug
 MPC: last T_pred instants: extend onto the second equilibria
-Plots: INTEGRATE velocity (forward euler?)
+Plots: perché task3 è corretto e gli altri no
 Weight in cost matrices
 Fix animation
-Perturb initial condition
 Report
-Plots
+
 
 
  save (ctrl+s)

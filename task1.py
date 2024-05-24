@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
 import parameters as param
-import cost as cst
 import newton as nwt
 
 # Plot the equilibrium points
@@ -20,8 +19,7 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-max_iters = 5
-
+max_iters = 20
 # Import equilibrium points
 
 uu1 = np.zeros((ni))
@@ -32,12 +30,29 @@ xx2 = np.zeros((ns))
 uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
 
+def func1(input):
+    result = param.dynamics(xx1, input[:3], 0)
+    return result 
+def func2(input):
+    result = param.dynamics(xx2, input[:3], 0)
+    return result 
+def find_equilibria(u_guess, type):
+    # Use fsolve to find the equilibria
+    inputs = np.append(u_guess, 0.0)
+    if type == 1:
+        equilibrium_inputs = fsolve(func1, inputs)
+    else:
+        equilibrium_inputs = fsolve(func2, inputs)
+    eq = equilibrium_inputs[:3]
+    return eq
 
-uu1 = [0.30953803, -1.04573824, -0.28607073]
+#uu1 = [0.30953803, -1.04573824, -0.28607073]
 xx1 = [600, 0.1, 0, 0]
+uu1 = find_equilibria(uu0, 1)
 
-uu2 = [0.42612887, -0.35995701, -0.14891448 ]
-xx2 = [900, 0.1, 0.1, 0]
+#uu2 = [0.42612887, -0.35995701, -0.14891448 ]
+xx2 = [900, 0.1, 0.06, 0]
+uu2 = find_equilibria(uu0, 2)
 
 #uu2 = [0.28186975 -0.56941592 -0.19080626 ]
 #xx2 = [750, 0.2, 0, 0]
@@ -200,36 +215,53 @@ plt.show()
 # Integrate over time
 
 # Plotting the trajectory
-# plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-# plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
-# plt.title('Airplane Trajectory')
-# plt.xlabel('X-axis')
-# plt.ylabel('Y-axis')
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
+plt.title('Airplane Trajectory')
+plt.xlabel('X-axis')
+plt.ylabel('Y-axis')
+plt.legend()
+plt.grid(True)
+plt.show()
 
 # Supponiamo che xx_star e xx_ref contengano le derivate di x e y:
 # xx_star[0,:] = velocità (v)
 # xx_star[1,:] = angolo (theta)
 # xx_star[2,:] = angolo di direzione (psi)
 
-# Definisci l'intervallo di campionamento temporale
-delta_t = param.dt  # ad esempio, 0.1 secondi
+# Define time interval
+delta_t = param.dt  # for example 0.1 seconds
 
-# Calcola le velocità nei componenti x e y per entrambe le traiettorie
-vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+# Get the velocities in x and y
+vx_star = xx_star[0, :] * np.cos(-xx_star[2, :] + xx_star[1, :])
 vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
-vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
+vx_ref = xx_ref[0, :] * np.cos(-xx_ref[2, :] + xx_ref[1, :])
 vy_ref = xx_ref[0, :] * np.sin(xx_ref[1, :] - xx_ref[2, :])
 
-# Integra numericamente le velocità per ottenere le posizioni
-x_star = np.cumsum(vx_star) * delta_t
-y_star = np.cumsum(vy_star) * delta_t
-x_ref = np.cumsum(vx_ref) * delta_t
-y_ref = np.cumsum(vy_ref) * delta_t
+# Forward Euler: Integrate numerically the velocities to obtain the positions
+x_star = np.zeros_like(vx_star)
+x_star[0] = 0
+for i in range(1, len(vx_star)):
+    x_star[i] = x_star[i-1] + vx_star[i] * delta_t
 
-# Traccia le traiettorie
+y_star = np.zeros_like(vy_star)
+y_star[0] = 0
+for i in range(1, len(vy_star)):
+    y_star[i] = y_star[i-1] + vy_star[i] * delta_t
+
+x_ref = np.zeros_like(vx_ref)
+x_ref[0] = 0
+for i in range(1, len(vx_ref)):
+    x_ref[i] = x_ref[i-1] + vx_ref[i] * delta_t
+
+y_ref = np.zeros_like(vy_ref)
+y_ref[0] = 0
+for i in range(1, len(vy_ref)):
+    y_ref[i] = y_ref[i-1] + vy_ref[i] * delta_t
+
+
+
+# Track trajectories
 plt.plot(x_star, y_star, label='Optimal Trajectory')
 plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
 plt.xlabel('X position')

@@ -6,7 +6,7 @@ from scipy.optimize import fsolve
 # It's also useful to verify equilibria and the Jacobian of the system
 
 # Conditional variables
-verify_equilibrium = 0
+verify_equilibrium = 1
 plot = 0
 verify_jacobian = 0
 
@@ -38,9 +38,9 @@ ns = 4
 ni = 3
 
 # Initial conditions
-VV = 900 # longitudinal speed
+VV = 600 # longitudinal speed
 alfa = 0.1 # angle of attack
-theta = 0.1  # pitch
+theta = 0  # pitch
 qq = 0  # pitch rate
 
 
@@ -170,11 +170,11 @@ def func(input):
     return result 
     
 def find_equilibria(u_guess):
-    
     # Use fsolve to find the equilibria
     inputs = np.append(u_guess, 0.0)
     equilibrium_inputs = fsolve(func, inputs)
     return equilibrium_inputs
+
 
 # Verify that the dynamics are zero at the equilibrium
 if(verify_equilibrium):
