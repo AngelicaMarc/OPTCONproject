@@ -200,13 +200,42 @@ plt.show()
 # Integrate over time
 
 # Plotting the trajectory
-plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
-plt.title('Airplane Trajectory')
-plt.xlabel('X-axis')
-plt.ylabel('Y-axis')
+# plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+# plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
+# plt.title('Airplane Trajectory')
+# plt.xlabel('X-axis')
+# plt.ylabel('Y-axis')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
+
+# Supponiamo che xx_star e xx_ref contengano le derivate di x e y:
+# xx_star[0,:] = velocità (v)
+# xx_star[1,:] = angolo (theta)
+# xx_star[2,:] = angolo di direzione (psi)
+
+# Definisci l'intervallo di campionamento temporale
+delta_t = param.dt  # ad esempio, 0.1 secondi
+
+# Calcola le velocità nei componenti x e y per entrambe le traiettorie
+vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
+vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
+vy_ref = xx_ref[0, :] * np.sin(xx_ref[1, :] - xx_ref[2, :])
+
+# Integra numericamente le velocità per ottenere le posizioni
+x_star = np.cumsum(vx_star) * delta_t
+y_star = np.cumsum(vy_star) * delta_t
+x_ref = np.cumsum(vx_ref) * delta_t
+y_ref = np.cumsum(vy_ref) * delta_t
+
+# Traccia le traiettorie
+plt.plot(x_star, y_star, label='Optimal Trajectory')
+plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
+plt.xlabel('X position')
+plt.ylabel('Y position')
 plt.legend()
-plt.grid(True)
+plt.title('Airplane Trajectories')
 plt.show()
 
 
