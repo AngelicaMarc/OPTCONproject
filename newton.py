@@ -325,9 +325,9 @@ def Newton (xx, uu, xx_ref, uu_ref, x0, max_iters):
 
             plt.figure(1)
             plt.clf()
-            plt.plot(steps, costs, color='g', label='$\\ell(x^k - \\gamma*d^k$)')
-            plt.plot(steps, J[kk] + descent_arm[kk]*steps, color='r', label='$\\ell(x^k) - \\gamma*\\nabla\\ell(x^k)^{\\top}d^k$')
-            plt.plot(steps, J[kk] + c*descent_arm[kk]*steps, color='g', linestyle='dashed', label='$\\ell(x^k) - \\gamma*c*\\nabla\\ell(x^k)^{\\top}d^k$')
+            plt.plot(steps, costs, color='g', label='$\\ell(x^k + \\gamma*d^k$)')
+            plt.plot(steps, J[kk] + descent_arm[kk]*steps, color='r', label='$\\ell(x^k) + \\gamma*\\nabla\\ell(x^k)^{\\top}d^k$')
+            plt.plot(steps, J[kk] + c*descent_arm[kk]*steps, color='g', linestyle='dashed', label='$\\ell(x^k) + \\gamma*c*\\nabla\\ell(x^k)^{\\top}d^k$')
             plt.scatter(stepsizes, costs_armijo, marker='*') # plot the tested stepsize
             plt.grid()
             plt.xlabel('stepsize')
