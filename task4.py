@@ -11,7 +11,7 @@ import random
 
 
 ##############
-plot = 1
+plot = 0
 max_iters = 10
 ##############
 
@@ -31,8 +31,8 @@ tm = int(ts / 2)           # Middle time step
 stretch = 2*dt*ts*0.001    # For the sigmoid to work properly
 
 # To fix alpha weight we change cost matrices, just for the MPC part
-QQ = np.diag([1, 1, 1, 1])     
-RR = np.diag([1.0, 1.0, 1.0]) 
+QQ = np.diag([0.1, 100, 1000, 0.1])     
+RR = np.diag([1.0, 100.0, 1.0]) 
 #QQ = cst.QQt
 #RR = cst.RRt
 QQf = cst.QQT
@@ -235,21 +235,21 @@ if(plot):
 
   # Plotting the trajectory
   
-  # Define time interval
-  delta_t = param.dt  # for example 0.1 seconds
+# Define time interval
+delta_t = param.dt  # for example 0.1 seconds
 
-  # Get the velocities in x and y
-  vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
-  vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
-  vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
-  vy_ref = xx_ref[0, :] * np.sin(xx_ref[2, :] - xx_ref[1, :])
-  
-  # Forward Euler: Integrate numerically the velocities to obtain the positions
-  x_star = np.cumsum(vx_star) * delta_t
-  y_star = np.cumsum(vy_star) * delta_t
-  x_ref = np.cumsum(vx_ref) * delta_t
-  y_ref = np.cumsum(vy_ref) * delta_t
-  
+# Get the velocities in x and y
+vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
+vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
+vy_ref = xx_ref[0, :] * np.sin(xx_ref[2, :] - xx_ref[1, :])
+
+# Forward Euler: Integrate numerically the velocities to obtain the positions
+x_star = np.cumsum(vx_star) * delta_t
+y_star = np.cumsum(vy_star) * delta_t
+x_ref = np.cumsum(vx_ref) * delta_t
+y_ref = np.cumsum(vy_ref) * delta_t
+if(plot):
   # Track trajectories
   plt.plot(x_star, y_star, label='Optimal Trajectory')
   plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
@@ -299,7 +299,7 @@ def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, thetamin, T_pred):
 # Model Predictive Control
 #############################
 
-T_pred = 5      # MPC Prediction horizon
+T_pred = 15      # MPC Prediction horizon
 thetamin = -0.1
 
 xx_real_mpc = np.zeros((ns,Tsim))
@@ -314,8 +314,8 @@ def disturbance(x):
         y[i] = random.uniform(-0.1, 0.1)
     return x + x*y
 
-#xx_real_mpc[:,0] = disturbance(xx1)    # initial conditions different from the ones of xx0_star 
-xx_real_mpc[:,0] = [700, 0.11, 0.05, 0.05]
+xx_real_mpc[:,0] = disturbance(xx1)    # initial conditions different from the ones of xx0_star 
+#xx_real_mpc[:,0] = [700, 0.11, 0.05, 0.05]
 
 for tt in range(Tsim-1):
   # System evolution - real with MPC
