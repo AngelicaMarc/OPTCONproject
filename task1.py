@@ -19,7 +19,7 @@ ts = param.num_steps    # number of time steps
 tf = ts * dt            # Final time in seconds
 tm = int(ts / 2)        # Middle time step
 
-max_iters = 20
+max_iters = 10
 # Import equilibrium points
 
 uu1 = np.zeros((ni))
@@ -46,9 +46,10 @@ def find_equilibria(u_guess, type):
     eq = equilibrium_inputs[:3]
     return eq
 
-#uu1 = [0.30953803, -1.04573824, -0.28607073]
+#uu1 = [0.19707068, -1.01877927, -0.28067893]
 xx1 = [600, 0.1, 0, 0]
 uu1 = find_equilibria(uu0, 1)
+
 
 #uu2 = [0.42612887, -0.35995701, -0.14891448 ]
 xx2 = [900, 0.1, 0.06, 0]
@@ -212,22 +213,15 @@ axs[6].set_xlabel('time')
     
 plt.show()
 
-# Integrate over time
-
 # Plotting the trajectory
-plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
-plt.title('Airplane Trajectory')
-plt.xlabel('X-axis')
-plt.ylabel('Y-axis')
-plt.legend()
-plt.grid(True)
-plt.show()
-
-# Supponiamo che xx_star e xx_ref contengano le derivate di x e y:
-# xx_star[0,:] = velocità (v)
-# xx_star[1,:] = angolo (theta)
-# xx_star[2,:] = angolo di direzione (psi)
+# plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
+# plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
+# plt.title('Airplane Trajectory')
+# plt.xlabel('X-axis')
+# plt.ylabel('Y-axis')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
 
 # Define time interval
 delta_t = param.dt  # for example 0.1 seconds
@@ -258,8 +252,6 @@ y_ref = np.zeros_like(vy_ref)
 y_ref[0] = 0
 for i in range(1, len(vy_ref)):
     y_ref[i] = y_ref[i-1] + vy_ref[i] * delta_t
-
-
 
 # Track trajectories
 plt.plot(x_star, y_star, label='Optimal Trajectory')

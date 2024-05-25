@@ -6,24 +6,16 @@ import parameters as param
 import newton as nwt
 import math
 
-# TODO: Send the gradient to 1e-6
-
 ##############
 plot = 1
-max_iters = 5
+max_iters = 10
 ##############
 
-# Load the image
-img = mpimg.imread('airplane_039.jpg')
-
 # Import model parameters
-
 ns = param.ns
 ni = param.ni
-
 dt = param.dt              # discretization step from dynamics
 ts = param.num_steps       # number of time steps
-
 tf = ts * dt               # Final time in seconds
 tm = int(ts / 2)           # Middle time step
 
@@ -46,7 +38,6 @@ def custom_sigmoid(x, lower, upper, translation_factor, stretch_factor=stretch):
     return cust
 
 # Import equilibrium points
-
 uu1 = np.zeros((ni))
 uu2 = np.zeros((ni))
 xx1 = np.zeros((ns))
@@ -54,7 +45,6 @@ xx2 = np.zeros((ns))
 
 uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
-
 
 def func1(input):
     result = param.dynamics(xx1, input[:3], 0)
@@ -72,7 +62,6 @@ def find_equilibria(u_guess, type):
     eq = equilibrium_inputs[:3]
     return eq
 
-
 #uu1 = [0.30953803, -1.04573824, -0.28607073]
 xx1 = [600, 0.1, 0, 0]
 uu1 = find_equilibria(uu0, 1)
@@ -82,7 +71,6 @@ xx2 = [900, 0.1, 0.06, 0]
 uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
-
 traj_ref = np.zeros((ns+ni, ts))
 traj_ref[:ns,0] = xx1
 traj_ref[ns:,0] = uu1
@@ -256,11 +244,6 @@ if(plot):
 #   plt.legend()
 #   plt.grid(True)
 #   plt.show()
-
-  # Supponiamo che xx_star e xx_ref contengano le derivate di x e y:
-# xx_star[0,:] = velocità (v)
-# xx_star[1,:] = angolo (theta)
-# xx_star[2,:] = angolo di direzione (psi)
 
 # Definisci l'intervallo di campionamento temporale
 delta_t = param.dt  # ad esempio, 0.1 secondi
