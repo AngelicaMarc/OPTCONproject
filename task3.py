@@ -329,10 +329,15 @@ uu_temp = np.zeros((ni,ts))
 
 
 def disturbance(x):
-    y = np.zeros((4))
-    for i in range(4):
+    n = len(x)
+    print("Initial conditions: ", x)
+    y = np.zeros((n))
+    for i in range(n):
         y[i] = random.uniform(-0.05, 0.05)
-    return x + x*y
+        x[i] = x[i] + x[i]*y[i]
+    print("Disturbance: ", y)
+    print("New initial conditions: ", x)
+    return x
 
 xx_temp[:,0] = disturbance(xx1)     # initial conditions different from the ones of xx0_star 
 
@@ -416,24 +421,22 @@ if(plot):
 
   
 if Task5:
-  
-  fig, ax = plt.subplots(figsize=(10, 8))  
-  
+  fig, ax = plt.subplots(figsize=(10, 8)) 
   def animate(i):
       ax.clear()
-      ax.plot(xx_reg[0,:i+1]*np.cos(xx_reg[2,:i+1]-xx_reg[1,:i+1]), xx_reg[0,:i+1]*np.sin(xx_reg[2,:i+1]-xx_reg[1,:i+1]), '--', linewidth=2)
+      ax.plot(x_reg[:i+1], y_reg[:i+1], '--', linewidth=2)
       ax.set_title('Airplane Trajectory')
       ax.set_xlabel('X-axis')
       ax.set_ylabel('Y-axis')
       ax.grid(True)
-      last_x = xx_reg[0,i]
-      last_y = xx_reg[0,i]*np.sin(xx_reg[2,i]-xx_reg[1,i])
+      last_x = x_reg[i]
+      last_y = y_reg[i]
       
       resized_img = cv2.resize(img, (500, 500), dst=(30,30), interpolation=cv2.INTER_AREA)
       img_extent = [last_x - 5, last_x + 5, last_y - 5, last_y + 5] 
 
-      dx = xx_reg[0,i+1]*np.cos(xx_reg[2,i+1]-xx_reg[1,i+1]) - xx_reg[0,i]*np.cos(xx_reg[2,i]-xx_reg[1,i])
-      dy = xx_reg[0,i+1]*np.sin(xx_reg[2,i+1]-xx_reg[1,i+1]) - xx_reg[0,i]*np.sin(xx_reg[2,i]-xx_reg[1,i])
+      dx = x_reg[i+1] - x_reg[i]
+      dy = y_reg[i+1] - y_reg[i]
       temp_angle = angle = np.arctan2(dy, dx) * 180 / np.pi
       angle = temp_angle -45
       # Get the dimensions of the image
@@ -446,7 +449,7 @@ if Task5:
       rotated_image = cv2.warpAffine(resized_img, rotation_matrix, (width, height))
 
       ax.imshow(rotated_image, extent=img_extent, aspect='equal')
-      ax.plot(xx_reg[0,0], 0, 'ro', markersize=2)
+      ax.plot(x_reg[0], 0, 'ro', markersize=2)
 
   ani = animation.FuncAnimation(fig, animate, frames=ts, interval=1)
   print("Task 5 completed")
