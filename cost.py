@@ -9,6 +9,7 @@ ni = dyn.ni
 # Define Cost Matrices accordingly on the choosen dynamics
 
 QQt = np.diag([0.01, 1000, 1000, 0.01])                    # cost for xx = [VV, alfa, theta, qq]
+#QQt = np.diag([0.1, 100, 100, 0.1])
 RRt = np.diag([1.0, 1.0, 1.0])                               # costs for uu = [TT, CC, EE]
 QQT = QQt   # Terminal cost matrix
     

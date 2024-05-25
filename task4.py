@@ -12,7 +12,7 @@ import random
 
 ##############
 plot = 1
-max_iters = 15
+max_iters = 10
 ##############
 
 # Load the image
@@ -31,8 +31,8 @@ tm = int(ts / 2)           # Middle time step
 stretch = 2*dt*ts*0.001    # For the sigmoid to work properly
 
 # To fix alpha weight we change cost matrices, just for the MPC part
-QQ = np.diag([0.001, 1000, 100, 0.001])     
-RR = np.diag([1.0, 100.0, 1.0]) 
+QQ = np.diag([1, 1, 1, 1])     
+RR = np.diag([1.0, 1.0, 1.0]) 
 #QQ = cst.QQt
 #RR = cst.RRt
 QQf = cst.QQT
@@ -75,10 +75,10 @@ def find_equilibria(u_guess, type):
     eq = equilibrium_inputs[:3]
     return eq
 
-xx1 = [600, 0.1, 0, 0]
+xx1 = [600, 0.01, 0.1, 0]
 uu1 = find_equilibria(uu0, 1)
 
-xx2 = [900, 0.1, 0.06, 0]
+xx2 = [900, 0.01, 0.2, 0]
 uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
@@ -217,12 +217,12 @@ if(plot):
   axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
   axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
   axs[4].grid()
-  axs[4].set_ylabel('$\delta_c$')
+  axs[4].set_ylabel('$\delta_t$')
 
   axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
   axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
   axs[5].grid()
-  axs[5].set_ylabel('$\delta_m$')
+  axs[5].set_ylabel('$\delta_c$')
 
   axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
   axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
@@ -239,10 +239,10 @@ if(plot):
   delta_t = param.dt  # for example 0.1 seconds
 
   # Get the velocities in x and y
-  vx_star = xx_star[0, :] * np.cos(xx_star[1, :] - xx_star[2, :])
-  vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
-  vx_ref = xx_ref[0, :] * np.cos(xx_ref[1, :] - xx_ref[2, :])
-  vy_ref = xx_ref[0, :] * np.sin(xx_ref[1, :] - xx_ref[2, :])
+  vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+  vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
+  vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
+  vy_ref = xx_ref[0, :] * np.sin(xx_ref[2, :] - xx_ref[1, :])
   
   # Forward Euler: Integrate numerically the velocities to obtain the positions
   x_star = np.cumsum(vx_star) * delta_t
@@ -252,7 +252,7 @@ if(plot):
   
   # Track trajectories
   plt.plot(x_star, y_star, label='Optimal Trajectory')
-  plt.plot(x_ref, y_ref, 'm--', label='MPC Trajectory')
+  plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
   plt.xlabel('X position')
   plt.ylabel('Y position')
   plt.legend()
@@ -314,7 +314,8 @@ def disturbance(x):
         y[i] = random.uniform(-0.1, 0.1)
     return x + x*y
 
-xx_real_mpc[:,0] = disturbance(xx1)    # initial conditions different from the ones of xx0_star 
+#xx_real_mpc[:,0] = disturbance(xx1)    # initial conditions different from the ones of xx0_star 
+xx_real_mpc[:,0] = [700, 0.11, 0.05, 0.05]
 
 for tt in range(Tsim-1):
   # System evolution - real with MPC
@@ -421,10 +422,10 @@ plt.show()
 delta_t = param.dt  # for example 0.1 seconds
 
 # Get the velocities in x and y
-vx_star = xx_star[0, :] * np.cos(xx_star[1, :] - xx_star[2, :])
-vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
-vx_ref = xx_real_mpc[0, :] * np.cos(xx_real_mpc[1, :] - xx_real_mpc[2, :])
-vy_ref = xx_real_mpc[0, :] * np.sin(xx_real_mpc[1, :] - xx_real_mpc[2, :])
+vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
+vx_ref = xx_real_mpc[0, :] * np.cos(xx_real_mpc[2, :] - xx_real_mpc[1, :])
+vy_ref = xx_real_mpc[0, :] * np.sin(xx_real_mpc[2, :] - xx_real_mpc[1, :])
 
 # Forward Euler: Integrate numerically the velocities to obtain the positions
 x_star = np.cumsum(vx_star) * delta_t

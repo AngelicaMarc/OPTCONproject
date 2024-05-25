@@ -63,11 +63,11 @@ def find_equilibria(u_guess, type):
     return eq
 
 #uu1 = [0.30953803, -1.04573824, -0.28607073]
-xx1 = [600, 0.1, 0, 0]
+xx1 = [600, -0.1, 0, 0]
 uu1 = find_equilibria(uu0, 1)
 
 #uu2 = [0.42612887, -0.35995701, -0.14891448 ]
-xx2 = [900, 0.1, 0.06, 0]
+xx2 = [900, -0.1, 0.06, 0]
 uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
@@ -250,9 +250,9 @@ delta_t = param.dt  # ad esempio, 0.1 secondi
 
 # Calcola le velocità nei componenti x e y per entrambe le traiettorie
 vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
-vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
+vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
 vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
-vy_ref = xx_ref[0, :] * np.sin(xx_ref[1, :] - xx_ref[2, :])
+vy_ref = xx_ref[0, :] * np.sin(xx_ref[2, :] - xx_ref[1, :])
 
 # Integra numericamente le velocità per ottenere le posizioni
 x_star = np.cumsum(vx_star) * delta_t

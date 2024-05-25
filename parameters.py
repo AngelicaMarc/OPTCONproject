@@ -6,7 +6,7 @@ from scipy.optimize import fsolve
 # It's also useful to verify equilibria and the Jacobian of the system
 
 # Conditional variables
-verify_equilibrium = 1
+verify_equilibrium = 0
 plot = 0
 verify_jacobian = 0
 
@@ -39,7 +39,7 @@ ni = 3
 
 # Initial conditions
 VV = 600 # longitudinal speed
-alfa = 0.1 # angle of attack
+alfa = 0.2 # angle of attack
 theta = 0  # pitch
 qq = 0  # pitch rate
 
@@ -96,7 +96,7 @@ def dynamics(xx, uu, flag=1):
 
     if flag:
         xxp[0] = VV + dt * (Th * np.cos(alfa) - DD - mm * gg * np.sin(theta - alfa)) / mm
-        xxp[1] = alfa+ dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
+        xxp[1] = alfa + dt * (qq - (Th * np.sin(alfa) + LL + L_delta - mm * gg * np.cos(theta - alfa)) / (mm * VV))
         xxp[2] = theta + dt * qq
         xxp[3] = qq + dt * ((M_delta + Ma) / JJ)
     else:

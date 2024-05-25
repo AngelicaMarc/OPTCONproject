@@ -250,9 +250,9 @@ if(plot):
 
   # Calcola le velocità nei componenti x e y per entrambe le traiettorie
   vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
-  vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
+  vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
   vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
-  vy_ref = xx_ref[0, :] * np.sin(xx_ref[1, :] - xx_ref[2, :])
+  vy_ref = xx_ref[0, :] * np.sin(xx_ref[2, :] - xx_ref[1, :])
 
   # Integra numericamente le velocità per ottenere le posizioni
   x_star = np.cumsum(vx_star) * delta_t
@@ -400,9 +400,9 @@ if(plot):
 
   # Calcola le velocità nei componenti x e y per entrambe le traiettorie
   vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
-  vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
+  vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
   vx_reg = xx_reg[0, :] * np.cos(xx_reg[2, :] - xx_reg[1, :])
-  vy_reg = xx_reg[0, :] * np.sin(xx_reg[1, :] - xx_reg[2, :])
+  vy_reg = xx_reg[0, :] * np.sin(xx_reg[2, :] - xx_reg[1, :])
 
   # Integra numericamente le velocità per ottenere le posizioni
   x_star = np.cumsum(vx_star) * delta_t

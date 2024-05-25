@@ -227,10 +227,10 @@ plt.show()
 delta_t = param.dt  # for example 0.1 seconds
 
 # Get the velocities in x and y
-vx_star = xx_star[0, :] * np.cos(-xx_star[2, :] + xx_star[1, :])
-vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
-vx_ref = xx_ref[0, :] * np.cos(-xx_ref[2, :] + xx_ref[1, :])
-vy_ref = xx_ref[0, :] * np.sin(xx_ref[1, :] - xx_ref[2, :])
+vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
+vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
+vy_ref = xx_ref[0, :] * np.sin(xx_ref[2, :] - xx_ref[1, :])
 
 # Forward Euler: Integrate numerically the velocities to obtain the positions
 x_star = np.zeros_like(vx_star)
