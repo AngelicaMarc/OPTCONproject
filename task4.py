@@ -11,7 +11,7 @@ import random
 
 
 ##############
-plot = 0
+plot = 1
 max_iters = 15
 ##############
 
@@ -30,10 +30,12 @@ tf = ts * dt               # Final time in seconds
 tm = int(ts / 2)           # Middle time step
 stretch = 2*dt*ts*0.001    # For the sigmoid to work properly
 
-QQ = np.diag([0.001, 10000, 100, 0.001])     
-RR = np.diag([1.0, 100.0, 1.0]) # TO FIX alpha weight
+# To fix alpha weight we change cost matrices, just for the MPC part
+QQ = np.diag([0.001, 1000, 100, 0.001])     
+RR = np.diag([1.0, 100.0, 1.0]) 
+#QQ = cst.QQt
+#RR = cst.RRt
 QQf = cst.QQT
-
 
 def sigmoid(x):
     if x >= 0:
@@ -44,20 +46,16 @@ def sigmoid(x):
         z = math.exp(x)
         sig = z / (1 + z)
         return sig
-
 def custom_sigmoid(x, lower, upper, translation_factor, stretch_factor=stretch):
     scaled_x = (x - translation_factor) * stretch_factor
     sig = sigmoid(scaled_x)
     cust = lower + (upper - lower) * sig
     return cust
 
-# Import equilibrium points
-
 uu1 = np.zeros((ni))
 uu2 = np.zeros((ni))
 xx1 = np.zeros((ns))
 xx2 = np.zeros((ns))
-
 uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
 
@@ -77,11 +75,9 @@ def find_equilibria(u_guess, type):
     eq = equilibrium_inputs[:3]
     return eq
 
-#uu1 = [0.30953803, -1.04573824, -0.28607073]
 xx1 = [600, 0.1, 0, 0]
 uu1 = find_equilibria(uu0, 1)
 
-#uu2 = [0.42612887, -0.35995701, -0.14891448 ]
 xx2 = [900, 0.1, 0.06, 0]
 uu2 = find_equilibria(uu0, 2)
 
@@ -239,14 +235,30 @@ if(plot):
 
   # Plotting the trajectory
   
-  plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-  plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
-  plt.title('Airplane Trajectory')
-  plt.xlabel('X-axis')
-  plt.ylabel('Y-axis')
+  # Define time interval
+  delta_t = param.dt  # for example 0.1 seconds
+
+  # Get the velocities in x and y
+  vx_star = xx_star[0, :] * np.cos(xx_star[1, :] - xx_star[2, :])
+  vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
+  vx_ref = xx_ref[0, :] * np.cos(xx_ref[1, :] - xx_ref[2, :])
+  vy_ref = xx_ref[0, :] * np.sin(xx_ref[1, :] - xx_ref[2, :])
+  
+  # Forward Euler: Integrate numerically the velocities to obtain the positions
+  x_star = np.cumsum(vx_star) * delta_t
+  y_star = np.cumsum(vy_star) * delta_t
+  x_ref = np.cumsum(vx_ref) * delta_t
+  y_ref = np.cumsum(vy_ref) * delta_t
+  
+  # Track trajectories
+  plt.plot(x_star, y_star, label='Optimal Trajectory')
+  plt.plot(x_ref, y_ref, 'm--', label='MPC Trajectory')
+  plt.xlabel('X position')
+  plt.ylabel('Y position')
   plt.legend()
-  plt.grid(True)
+  plt.title('Airplane Trajectories')
   plt.show()
+  
 
 # MPC - Task 4
 Tsim = ts
@@ -331,6 +343,7 @@ for tt in range(Tsim-1):
     xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,Tsim-T_pred-1], uu_real_mpc[:,Tsim-T_pred-1])
 
 uu_real_mpc[:,-1] = uu_real_mpc[:,-2]        # for plotting purposes
+
 #######################################
 # Plots
 #######################################
@@ -394,7 +407,7 @@ plt.legend()
 plt.show()
 
 # Plotting the trajectory
-print("Task 4 completed")
+
 # plt.plot(xx_real_mpc[0,:]*np.cos(xx_real_mpc[2,:]-xx_real_mpc[1,:]), xx_real_mpc[0,:]*np.sin(xx_real_mpc[2,:]-xx_real_mpc[1,:]), label='MPC Trajectory')
 # plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]),'m--',label='Optimal Trajectory')
 # plt.title('Airplane Trajectory')
@@ -408,41 +421,25 @@ print("Task 4 completed")
 delta_t = param.dt  # for example 0.1 seconds
 
 # Get the velocities in x and y
-vx_star = xx_star[0, :] * np.cos(-xx_star[2, :] + xx_star[1, :])
+vx_star = xx_star[0, :] * np.cos(xx_star[1, :] - xx_star[2, :])
 vy_star = xx_star[0, :] * np.sin(xx_star[1, :] - xx_star[2, :])
-vx_ref = xx_real_mpc[0, :] * np.cos(-xx_real_mpc[2, :] + xx_real_mpc[1, :])
+vx_ref = xx_real_mpc[0, :] * np.cos(xx_real_mpc[1, :] - xx_real_mpc[2, :])
 vy_ref = xx_real_mpc[0, :] * np.sin(xx_real_mpc[1, :] - xx_real_mpc[2, :])
 
 # Forward Euler: Integrate numerically the velocities to obtain the positions
-x_star = np.zeros_like(vx_star)
-x_star[0] = 0
-for i in range(1, len(vx_star)):
-    x_star[i] = x_star[i-1] + vx_star[i] * delta_t
-
-y_star = np.zeros_like(vy_star)
-y_star[0] = 0
-for i in range(1, len(vy_star)):
-    y_star[i] = y_star[i-1] + vy_star[i] * delta_t
-
-x_ref = np.zeros_like(vx_ref)
-x_ref[0] = 0
-for i in range(1, len(vx_ref)):
-    x_ref[i] = x_ref[i-1] + vx_ref[i] * delta_t
-
-y_ref = np.zeros_like(vy_ref)
-y_ref[0] = 0
-for i in range(1, len(vy_ref)):
-    y_ref[i] = y_ref[i-1] + vy_ref[i] * delta_t
+x_star = np.cumsum(vx_star) * delta_t
+y_star = np.cumsum(vy_star) * delta_t
+x_ref = np.cumsum(vx_ref) * delta_t
+y_ref = np.cumsum(vy_ref) * delta_t
 
 
-
+print("Task 4 completed")
 # Track trajectories
 plt.plot(x_star, y_star, label='Optimal Trajectory')
-plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
+plt.plot(x_ref, y_ref, 'm--', label='MPC Trajectory')
 plt.xlabel('X position')
 plt.ylabel('Y position')
 plt.legend()
 plt.title('Airplane Trajectories')
 plt.show()
-
 
