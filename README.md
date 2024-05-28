@@ -62,3 +62,23 @@ GENERATION OF REFERENCE TRAJECTORY
 
 We've generated reference trajectories for the state stack and the input stack
 
+TASK 1
+
+In Task 1, starting from two desired states we defined a function to obtain two input equilibria for our system and compute the reference trajectories for states and inputs.
+
+Our goal is to obtain a variation from one equilibria to the other one for the states of velocity and the pitch, keeping alfa and pitch rate constant.
+ 
+The next step was to compute the optimal trajectory to move from equilibrium xx1 to xx2 exploiting the regularized version of Newton's-like algorithm for optimal control. 
+In order to find a trajectory to move from one equilibrium to the other, we started from a reference curve exploiting what we did before (a step function).
+The code employs a Newton-like optimization algorithm, to compute the optimal transition trajectory between two equilibria. The optimization aims to minimize a cost function, denoted as J (discussed later), while ensuring smooth and stable trajectory transitions.
+Newton's method is iteratively applied to minimize the cost function J by updating the control inputs (uu) to steer the system from one equilibrium to another. 
+The optimization process begins with initial guesses for the control inputs (
+u) and system states based on a reference trajectory (traj\_ref) defined earlier in the code.
+
+The algorithm iterates over a predefined number of iterations, in our case 50 were enough to meet our standards. 
+At each iteration, Newton's method computes a descent direction by solving a system of linear equations derived from the gradient and Hessian of the cost function J.
+
+Using the computed descent direction, the control inputs (u) are updated to move the system towards the desired trajectory, minimizing the cost function and improving alignment with the reference trajectory.
+
+The computed trajectory minimizes the cost function while ensuring smooth and stable transitions between equilibria, meeting the requirements of the task.
+
