@@ -8,7 +8,7 @@ from scipy.optimize import fsolve
 # Conditional variables
 verify_equilibrium = 0
 plot = 0
-verify_jacobian = 0
+verify_jacobian = 0     # Verify the Jacobian of the system, just for debugging\\
 
 # discretization step
 dt = 1e-2
@@ -241,12 +241,12 @@ if(verify_equilibrium):
 
 # Verify that the Jacobian is correct
 if(verify_jacobian):
-
+    dt = 1e-7
     fx, fu = jacobian(xx, uu)
     fx = fx.T
     fu = fu.T
     xxp = dynamics(xx, uu)
     print(uu)
     # Verify the dynamics of the system
-    np.testing.assert_allclose(xxp, fx @ xx + fu @ uu, atol=1e-03)
+    np.testing.assert_allclose(xxp, fx @ xx + fu @ uu, atol=1e-07)
     print("Dynamics verification passed!")
