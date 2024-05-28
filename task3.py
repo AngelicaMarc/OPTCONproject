@@ -11,8 +11,8 @@ from scipy.optimize import fsolve
 import random
 
 ##############
-plot = 1
-Task5 = False
+plot = 0
+Task5 = 1
 max_iters = 10
 ##############
 
