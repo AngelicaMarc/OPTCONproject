@@ -12,7 +12,7 @@ import random
 
 ##############
 plot = 1
-Task5 = True
+Task5 = False
 max_iters = 10
 ##############
 
@@ -74,11 +74,11 @@ uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
 
 #uu1 = [0.30953803, -1.04573824, -0.28607073]
-xx1 = [600, 0.1, 0, 0]
+xx1 = [600, 0.1, 0.2, 0]
 uu1 = find_equilibria(uu0, 1)
 
 #uu2 = [0.42612887, -0.35995701, -0.14891448 ]
-xx2 = [900, 0.1, 0.06, 0]
+xx2 = [900, 0.1, 0.26, 0]
 uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
@@ -339,8 +339,8 @@ def disturbance(x):
     print("New initial conditions: ", x)
     return x
 
-xx_temp[:,0] = disturbance(xx1)     # initial conditions different from the ones of xx0_star 
-
+#xx_temp[:,0] = disturbance(xx1)     # initial conditions different from the ones of xx0_star 
+xx_temp[:,0] = [700, 0.05, 0.1, 0.1]
 
 for tt in range(ts-1):
   uu_temp[:,tt] = uu_star[:,tt] + KK_reg[:,:,tt]@(xx_temp[:,tt]-xx_star[:,tt])
@@ -396,20 +396,21 @@ if(plot):
   plt.show()
   print("Task 3 completed")
 
-  delta_t = param.dt  # ad esempio, 0.1 secondi
+delta_t = param.dt  # ad esempio, 0.1 secondi
 
-  # Calcola le velocità nei componenti x e y per entrambe le traiettorie
-  vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
-  vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
-  vx_reg = xx_reg[0, :] * np.cos(xx_reg[2, :] - xx_reg[1, :])
-  vy_reg = xx_reg[0, :] * np.sin(xx_reg[2, :] - xx_reg[1, :])
+# Calcola le velocità nei componenti x e y per entrambe le traiettorie
+vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
+vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
+vx_reg = xx_reg[0, :] * np.cos(xx_reg[2, :] - xx_reg[1, :])
+vy_reg = xx_reg[0, :] * np.sin(xx_reg[2, :] - xx_reg[1, :])
 
-  # Integra numericamente le velocità per ottenere le posizioni
-  x_star = np.cumsum(vx_star) * delta_t
-  y_star = np.cumsum(vy_star) * delta_t
-  x_reg = np.cumsum(vx_reg) * delta_t
-  y_reg = np.cumsum(vy_reg) * delta_t
+# Integra numericamente le velocità per ottenere le posizioni
+x_star = np.cumsum(vx_star) * delta_t
+y_star = np.cumsum(vy_star) * delta_t
+x_reg = np.cumsum(vx_reg) * delta_t
+y_reg = np.cumsum(vy_reg) * delta_t
 
+if(plot):
   # Traccia le traiettorie
   plt.plot(x_star, y_star, label='Optimal Trajectory')
   plt.plot(x_reg, y_reg, 'm--', label='Regularized Trajectory')
@@ -433,22 +434,30 @@ if Task5:
       last_y = y_reg[i]
       
       resized_img = cv2.resize(img, (500, 500), dst=(30,30), interpolation=cv2.INTER_AREA)
-      img_extent = [last_x - 5, last_x + 5, last_y - 5, last_y + 5] 
+      border_size = 300  # Adjust as needed
+      bordered_img = cv2.copyMakeBorder(resized_img, border_size, border_size, border_size, border_size, cv2.BORDER_CONSTANT, value=[255, 255, 255])
 
       dx = x_reg[i+1] - x_reg[i]
       dy = y_reg[i+1] - y_reg[i]
       temp_angle = angle = np.arctan2(dy, dx) * 180 / np.pi
       angle = temp_angle -45
       # Get the dimensions of the image
-      height, width = resized_img.shape[:2]
+      height, width = bordered_img.shape[:2]
 
       # Calculate the rotation matrix
       rotation_matrix = cv2.getRotationMatrix2D((width / 2, height / 2), angle, 1)
 
       # Apply the rotation to the image
-      rotated_image = cv2.warpAffine(resized_img, rotation_matrix, (width, height))
+      rotated_image = cv2.warpAffine(bordered_img, rotation_matrix, (width, height))
+        
+      # Calculate the cropping to exclude borders
+      crop_border_size = border_size * 2  # Adjust as needed
+      crop_height = height - crop_border_size
+      crop_width = width - crop_border_size
+      cropped_image = rotated_image[border_size:border_size+crop_height, border_size:border_size+crop_width]
+      img_extent = [last_x - 5, last_x + 5, last_y - 5, last_y + 5] 
 
-      ax.imshow(rotated_image, extent=img_extent, aspect='equal')
+      ax.imshow(cropped_image, extent=img_extent, aspect='equal')
       ax.plot(x_reg[0], 0, 'ro', markersize=2)
 
   ani = animation.FuncAnimation(fig, animate, frames=ts, interval=1)
