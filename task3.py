@@ -11,8 +11,8 @@ from scipy.optimize import fsolve
 import random
 
 ##############
-plot = 0
-Task5 = 1
+plot = 1
+Task5 = 0
 max_iters = 10
 ##############
 
@@ -340,7 +340,8 @@ def disturbance(x):
     return x
 
 #xx_temp[:,0] = disturbance(xx1)     # initial conditions different from the ones of xx0_star 
-xx_temp[:,0] = [700, 0.05, 0.1, 0.1]
+#xx_temp[:,0] = [700, 0.05, 0.1, 0.1]
+xx_temp[:,0] = np.copy(xx1)
 
 for tt in range(ts-1):
   uu_temp[:,tt] = uu_star[:,tt] + KK_reg[:,:,tt]@(xx_temp[:,tt]-xx_star[:,tt])

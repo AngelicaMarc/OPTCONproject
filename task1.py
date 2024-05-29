@@ -5,7 +5,8 @@ import parameters as param
 import newton as nwt
 
 # Plot the equilibrium points
-plot = 1
+plot = 0
+intermediate_plots = 1
 ##############
 
 # Import model parameters
@@ -47,12 +48,12 @@ def find_equilibria(u_guess, type):
     return eq
 
 #uu1 = [0.19707068, -1.01877927, -0.28067893]
-xx1 = [600, 0.1, 0, 0]
+xx1 = [600, 0.1, 0.2, 0]
 uu1 = find_equilibria(uu0, 1)
 
 
 #uu2 = [0.42612887, -0.35995701, -0.14891448 ]
-xx2 = [900, 0.1, 0.06, 0]
+xx2 = [900, 0.1, 0.26, 0]
 uu2 = find_equilibria(uu0, 2)
 
 #uu2 = [0.28186975 -0.56941592 -0.19080626 ]
@@ -86,9 +87,10 @@ print(f"final state: {traj_ref[:ns,ts-1]}")
 xx_ref = traj_ref[0:ns,:]
 uu_ref = traj_ref[ns:,:]
 
+tt_hor = np.linspace(0,tf,ts)
+
 if(plot):
     # Plot of the reference trajectories
-    tt_hor = np.linspace(0,tf,ts)
 
     fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
@@ -149,69 +151,108 @@ uu_star = uu[:,:,kk]
 uu_star[:,-1] = uu_star[:,-2]        # for plotting purposes
 
 # Plots of descent direction and cost
+if(plot):
+    plt.figure('descent direction')
+    plt.plot(np.arange(kk), descent[:kk])
+    plt.xlabel('$k$')
+    plt.ylabel('||$\\nabla J(\\mathbf{u}^k)||$')
+    plt.yscale('log')
+    plt.grid()
+    plt.show(block=False)
 
-plt.figure('descent direction')
-plt.plot(np.arange(kk), descent[:kk])
-plt.xlabel('$k$')
-plt.ylabel('||$\\nabla J(\\mathbf{u}^k)||$')
-plt.yscale('log')
-plt.grid()
-plt.show(block=False)
+    plt.figure('cost')
+    plt.plot(np.arange(kk), JJ[:kk])
+    plt.xlabel('$k$')
+    plt.ylabel('$J(\\mathbf{u}^k)$')
+    plt.yscale('log')
+    plt.grid()
+    plt.show(block=False)
 
-plt.figure('cost')
-plt.plot(np.arange(kk), JJ[:kk])
-plt.xlabel('$k$')
-plt.ylabel('$J(\\mathbf{u}^k)$')
-plt.yscale('log')
-plt.grid()
-plt.show(block=False)
+    ##############################################################
+    # Design OPTIMAL TRAJECTORY  
+    ##############################################################
 
-# Definition of the sigmoid function for plotting purposes
+    fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
-##############################################################
-# Design OPTIMAL TRAJECTORY  
-##############################################################
+    axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
+    axs[0].plot(tt_hor, xx_ref[0,:], 'm--', linewidth=2)
+    axs[0].grid()
+    axs[0].set_ylabel('$V$')
 
-fig, axs = plt.subplots(ns+ni, 1, sharex='all')
+    axs[1].plot(tt_hor, xx_star[1,:], linewidth=2)
+    axs[1].plot(tt_hor, xx_ref[1,:], 'm--', linewidth=2)
+    axs[1].grid()
+    axs[1].set_ylabel('$\\alpha$')
 
-axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
-axs[0].plot(tt_hor, xx_ref[0,:], 'm--', linewidth=2)
-axs[0].grid()
-axs[0].set_ylabel('$V$')
+    axs[2].plot(tt_hor, xx_star[2,:], linewidth=2)
+    axs[2].plot(tt_hor, xx_ref[2,:], 'm--', linewidth=2)
+    axs[2].grid()
+    axs[2].set_ylabel('$\\theta$')
 
-axs[1].plot(tt_hor, xx_star[1,:], linewidth=2)
-axs[1].plot(tt_hor, xx_ref[1,:], 'm--', linewidth=2)
-axs[1].grid()
-axs[1].set_ylabel('$\\alpha$')
+    axs[3].plot(tt_hor, xx_star[3,:], linewidth=2)
+    axs[3].plot(tt_hor, xx_ref[3,:], 'm--', linewidth=2)
+    axs[3].grid()
+    axs[3].set_ylabel('$q$')
 
-axs[2].plot(tt_hor, xx_star[2,:], linewidth=2)
-axs[2].plot(tt_hor, xx_ref[2,:], 'm--', linewidth=2)
-axs[2].grid()
-axs[2].set_ylabel('$\\theta$')
+    axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
+    axs[4].plot(tt_hor, uu_ref[0,:], 'm--', linewidth=2)
+    axs[4].grid()
+    axs[4].set_ylabel('$\delta_c$')
 
-axs[3].plot(tt_hor, xx_star[3,:], linewidth=2)
-axs[3].plot(tt_hor, xx_ref[3,:], 'm--', linewidth=2)
-axs[3].grid()
-axs[3].set_ylabel('$q$')
+    axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
+    axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
+    axs[5].grid()
+    axs[5].set_ylabel('$\delta_m$')
 
-axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
-axs[4].plot(tt_hor, uu_ref[0,:], 'm--', linewidth=2)
-axs[4].grid()
-axs[4].set_ylabel('$\delta_c$')
+    axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
+    axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
+    axs[6].grid()
+    axs[6].set_ylabel('$\delta_e$')
 
-axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
-axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
-axs[5].grid()
-axs[5].set_ylabel('$\delta_m$')
+    axs[6].set_xlabel('time')
+        
+    plt.show()
 
-axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
-axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
-axs[6].grid()
-axs[6].set_ylabel('$\delta_e$')
+if(intermediate_plots):
+  max_iters = kk
+  for kk in range(max_iters):
+    xx_star = xx[:,:,kk]
+    uu_star = uu[:,:,kk]
+    uu_star[:,-1] = uu_star[:,-2]    
 
-axs[6].set_xlabel('time')
-    
-plt.show()
+    fig, axs = plt.subplots(ns+ni, 1, sharex='all')
+
+    axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
+    axs[0].plot(tt_hor, xx_ref[0,:], 'm--', linewidth=2)
+    axs[0].grid()
+    axs[0].set_ylabel('$V$')  
+    axs[1].plot(tt_hor, xx_star[1,:], linewidth=2)
+    axs[1].plot(tt_hor, xx_ref[1,:], 'm--', linewidth=2)
+    axs[1].grid()
+    axs[1].set_ylabel('$\\alpha$')  
+    axs[2].plot(tt_hor, xx_star[2,:], linewidth=2)
+    axs[2].plot(tt_hor, xx_ref[2,:], 'm--', linewidth=2)
+    axs[2].grid()
+    axs[2].set_ylabel('$\\theta$')  
+    axs[3].plot(tt_hor, xx_star[3,:], linewidth=2)
+    axs[3].plot(tt_hor, xx_ref[3,:], 'm--', linewidth=2)
+    axs[3].grid()
+    axs[3].set_ylabel('$q$')  
+    axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
+    axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
+    axs[4].grid()
+    axs[4].set_ylabel('$\delta_c$')  
+    axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
+    axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
+    axs[5].grid()
+    axs[5].set_ylabel('$\delta_m$')  
+    axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
+    axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
+    axs[6].grid()
+    axs[6].set_ylabel('$\delta_e$')  
+    axs[6].set_xlabel('time')
+      
+    plt.show()
 
 # Plotting the trajectory
 # plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
@@ -254,12 +295,13 @@ for i in range(1, len(vy_ref)):
     y_ref[i] = y_ref[i-1] + vy_ref[i] * delta_t
 
 # Track trajectories
-plt.plot(x_star, y_star, label='Optimal Trajectory')
-plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
-plt.xlabel('X position')
-plt.ylabel('Y position')
-plt.legend()
-plt.title('Airplane Trajectories')
-plt.show()
+if(plot):
+    plt.plot(x_star, y_star, label='Optimal Trajectory')
+    plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
+    plt.xlabel('X position')
+    plt.ylabel('Y position')
+    plt.legend()
+    plt.title('Airplane Trajectories')
+    plt.show()
 
 
