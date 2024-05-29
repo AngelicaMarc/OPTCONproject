@@ -7,8 +7,8 @@ import newton as nwt
 import math
 
 ##############
-plot = 0
-intermediate_plots = 1
+plot = 1
+intermediate_plots = 0
 max_iters = 10
 ##############
 
@@ -64,7 +64,7 @@ def find_equilibria(u_guess, type):
     return eq
 
 #uu1 = [0.30953803, -1.04573824, -0.28607073]
-xx1 = [600, 0.1, 0.2, 0]
+xx1 = [600, 0, 0.2, 0]
 uu1 = find_equilibria(uu0, 1)
 
 #uu2 = [0.42612887, -0.35995701, -0.14891448 ]
@@ -246,37 +246,37 @@ if(intermediate_plots):
 
     fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
-  axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
-  axs[0].plot(tt_hor, xx_ref[0,:], 'm--', linewidth=2)
-  axs[0].grid()
-  axs[0].set_ylabel('$V$')  
-  axs[1].plot(tt_hor, xx_star[1,:], linewidth=2)
-  axs[1].plot(tt_hor, xx_ref[1,:], 'm--', linewidth=2)
-  axs[1].grid()
-  axs[1].set_ylabel('$\\alpha$')  
-  axs[2].plot(tt_hor, xx_star[2,:], linewidth=2)
-  axs[2].plot(tt_hor, xx_ref[2,:], 'm--', linewidth=2)
-  axs[2].grid()
-  axs[2].set_ylabel('$\\theta$')  
-  axs[3].plot(tt_hor, xx_star[3,:], linewidth=2)
-  axs[3].plot(tt_hor, xx_ref[3,:], 'm--', linewidth=2)
-  axs[3].grid()
-  axs[3].set_ylabel('$q$')  
-  axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
-  axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
-  axs[4].grid()
-  axs[4].set_ylabel('$\delta_c$')  
-  axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
-  axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
-  axs[5].grid()
-  axs[5].set_ylabel('$\delta_m$')  
-  axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
-  axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
-  axs[6].grid()
-  axs[6].set_ylabel('$\delta_e$')  
-  axs[6].set_xlabel('time')
-      
-  plt.show()
+    axs[0].plot(tt_hor, xx_star[0,:], linewidth=2)
+    axs[0].plot(tt_hor, xx_ref[0,:], 'm--', linewidth=2)
+    axs[0].grid()
+    axs[0].set_ylabel('$V$')  
+    axs[1].plot(tt_hor, xx_star[1,:], linewidth=2)
+    axs[1].plot(tt_hor, xx_ref[1,:], 'm--', linewidth=2)
+    axs[1].grid()
+    axs[1].set_ylabel('$\\alpha$')  
+    axs[2].plot(tt_hor, xx_star[2,:], linewidth=2)
+    axs[2].plot(tt_hor, xx_ref[2,:], 'm--', linewidth=2)
+    axs[2].grid()
+    axs[2].set_ylabel('$\\theta$')  
+    axs[3].plot(tt_hor, xx_star[3,:], linewidth=2)
+    axs[3].plot(tt_hor, xx_ref[3,:], 'm--', linewidth=2)
+    axs[3].grid()
+    axs[3].set_ylabel('$q$')  
+    axs[4].plot(tt_hor, uu_star[0,:], linewidth=2)
+    axs[4].plot(tt_hor, traj_ref[4,:], 'm--', linewidth=2)
+    axs[4].grid()
+    axs[4].set_ylabel('$\delta_c$')  
+    axs[5].plot(tt_hor, uu_star[1,:], linewidth=2)
+    axs[5].plot(tt_hor, uu_ref[1,:], 'm--', linewidth=2)
+    axs[5].grid()
+    axs[5].set_ylabel('$\delta_m$')  
+    axs[6].plot(tt_hor, uu_star[2,:],'g', linewidth=2)
+    axs[6].plot(tt_hor, uu_ref[2,:], 'm--', linewidth=2)
+    axs[6].grid()
+    axs[6].set_ylabel('$\delta_e$')  
+    axs[6].set_xlabel('time')
+
+    plt.show()
 #   plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
 #   plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
 #   plt.title('Airplane Trajectory')
