@@ -31,11 +31,11 @@ tm = int(ts / 2)           # Middle time step
 stretch = 2*dt*ts*0.001    # For the sigmoid to work properly
 
 # To fix alpha weight we change cost matrices, just for the MPC part
-QQ = np.diag([0.1, 100, 1000, 0.1])     
-RR = np.diag([1.0, 100.0, 1.0]) 
+QQ = np.diag([0.1, 100.0, 10000.0, 0.1])     
+RR = np.diag([1.0, 100.0, 1.0])
 #QQ = cst.QQt
 #RR = cst.RRt
-QQf = cst.QQT
+QQf = QQ
 
 def sigmoid(x):
     if x >= 0:
@@ -75,10 +75,10 @@ def find_equilibria(u_guess, type):
     eq = equilibrium_inputs[:3]
     return eq
 
-xx1 = [600, 0.01, 0.1, 0]
+xx1 = [600, 0.05, 0.1, 0]
 uu1 = find_equilibria(uu0, 1)
 
-xx2 = [900, 0.01, 0.2, 0]
+xx2 = [900, 0.1, 0.2, 0]
 uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
@@ -333,7 +333,7 @@ for tt in range(Tsim-1):
     print('MPC:\t t = {:.1f} sec.'.format(tt*dt))
 
   if tt < Tsim-T_pred:
-    xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, QQ, RR, tt, cst.QQT, xx_t_mpc, thetamin, T_pred = T_pred)
+    xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, QQ, RR, tt, QQf, xx_t_mpc, thetamin, T_pred = T_pred)
     
     uu_real_mpc[:,tt] = uu_mpc[:,0,tt]
     xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,tt], uu_real_mpc[:,tt])
