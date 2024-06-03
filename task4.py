@@ -31,7 +31,7 @@ tm = int(ts / 2)           # Middle time step
 stretch = 2*dt*ts*0.001    # For the sigmoid to work properly
 
 # To fix alpha weight we change cost matrices, just for the MPC part
-QQ = np.diag([0.1, 100.0, 10000.0, 0.1])     
+QQ = np.diag([0.01, 1000.0, 10000.0, 1])     
 RR = np.diag([1.0, 100.0, 1.0])
 #QQ = cst.QQt
 #RR = cst.RRt
@@ -265,7 +265,11 @@ Tsim = ts
 A_opt = np.zeros((ns, ns, ts))
 B_opt = np.zeros((ns, ni, ts))
 
-def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, thetamin, T_pred):
+##
+
+##
+
+def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, T_pred):
 
   xxt = xxt.squeeze()
   
@@ -277,7 +281,7 @@ def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, thetamin, T_pred):
   # Tsim-1-T_pred
   for tt in range(tl, tl + T_pred -1):
     cost += cp.quad_form(xx_mpc[:,tt-tl] - xx_star[:,tt], QQ) + cp.quad_form(uu_mpc[:,tt-tl] - uu_star[:,tt], RR)
-    constr += [xx_mpc[:,tt+1-tl] == AA[:,:,tt]@xx_mpc[:,tt-tl] + BB[:,:,tt]@uu_mpc[:,tt-tl],  # dynamics constraint
+    constr += [xx_mpc[:,tt+1-tl] - xx_star[:,tt+1] == AA[:,:,tt]@(xx_mpc[:,tt-tl]- xx_star[:,tt]) + BB[:,:,tt]@(uu_mpc[:,tt-tl]- uu_star[:,tt]),  # dynamics constraint
             # other max/min values constraint
             # xx_mpc[0,tt+1-tl] >= 508, xx_mpc[0,tt+1-tl] <= 2032,  # V
             ]
@@ -299,8 +303,7 @@ def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, thetamin, T_pred):
 # Model Predictive Control
 #############################
 
-T_pred = 15      # MPC Prediction horizon
-thetamin = -0.1
+T_pred = 5      # MPC Prediction horizon
 
 xx_real_mpc = np.zeros((ns,Tsim))
 uu_real_mpc = np.zeros((ni,Tsim))
@@ -310,12 +313,15 @@ uu_mpc = np.zeros((ni, T_pred, Tsim))
 
 def disturbance(x):
     y = np.zeros((4))
+    z = y.copy()
     for i in range(4):
-        y[i] = random.uniform(-0.1, 0.1)
-    return x + x*y
+        y[i] = random.uniform(0.1, 0.2)
+        z = x[i]*y[i]
+        x[i] = x[i] + z
+    return x
 
-xx_real_mpc[:,0] = disturbance(xx1)    # initial conditions different from the ones of xx0_star 
-#xx_real_mpc[:,0] = [700, 0.11, 0.05, 0.05]
+#xx_real_mpc[:,0] = disturbance(xx1)    # initial conditions different from the ones of xx0_star 
+xx_real_mpc[:,0] = [650, 0.03, 0.15, 0.01]
 
 for tt in range(Tsim-1):
   # System evolution - real with MPC
@@ -333,7 +339,7 @@ for tt in range(Tsim-1):
     print('MPC:\t t = {:.1f} sec.'.format(tt*dt))
 
   if tt < Tsim-T_pred:
-    xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, QQ, RR, tt, QQf, xx_t_mpc, thetamin, T_pred = T_pred)
+    xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, QQ, RR, tt, QQf, xx_t_mpc, T_pred = T_pred)
     
     uu_real_mpc[:,tt] = uu_mpc[:,0,tt]
     xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,tt], uu_real_mpc[:,tt])
