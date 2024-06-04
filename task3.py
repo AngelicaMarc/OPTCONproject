@@ -12,7 +12,8 @@ import random
 
 ##############
 plot = 1
-Task5 = 0
+disturb = 1
+Task5 = 1
 max_iters = 10
 ##############
 
@@ -74,11 +75,11 @@ uu0 = np.zeros((ni))
 uu0 = [0, 0, 0]
 
 #uu1 = [0.30953803, -1.04573824, -0.28607073]
-xx1 = [600, 0.1, 0.2, 0]
+xx1 = [600, 0.05, 0.1, 0]
 uu1 = find_equilibria(uu0, 1)
 
 #uu2 = [0.42612887, -0.35995701, -0.14891448 ]
-xx2 = [900, 0.1, 0.26, 0]
+xx2 = [900, 0.1, 0.2, 0]
 uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
@@ -245,27 +246,24 @@ if(plot):
 
   # Plotting the trajectory
 
-  # Definisci l'intervallo di campionamento temporale
-  delta_t = param.dt  # ad esempio, 0.1 secondi
+  # Define time interval
+  delta_t = param.dt  
 
-  # Calcola le velocità nei componenti x e y per entrambe le traiettorie
+  # Get the velocities in x and y
   vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
   vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
   vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
   vy_ref = xx_ref[0, :] * np.sin(xx_ref[2, :] - xx_ref[1, :])
 
-  # Integra numericamente le velocità per ottenere le posizioni
+  # Forward Euler: Integrate numerically the velocities to obtain the positions
   x_star = np.cumsum(vx_star) * delta_t
   y_star = np.cumsum(vy_star) * delta_t
   x_ref = np.cumsum(vx_ref) * delta_t
   y_ref = np.cumsum(vy_ref) * delta_t
 
-  # Traccia le traiettorie
+  # Track Trajectories
   plt.plot(x_star, y_star, label='Optimal Trajectory')
   plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
-  
-  # plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-  # plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
   plt.title('Airplane Trajectory')
   plt.xlabel('X-axis')
   plt.ylabel('Y-axis')
@@ -327,21 +325,25 @@ KK_reg = lti_LQR(A_opt, B_opt, Qt_reg, Rt_reg, QT_reg, ts)
 xx_temp = np.zeros((ns,ts))
 uu_temp = np.zeros((ni,ts))
 
-
+# Perturb initial conditions
 def disturbance(x):
     n = len(x)
     print("Initial conditions: ", x)
     y = np.zeros((n))
     for i in range(n):
-        y[i] = random.uniform(-0.05, 0.05)
+        y[i] = random.uniform(0.1, 0.3)
         x[i] = x[i] + x[i]*y[i]
     print("Disturbance: ", y)
     print("New initial conditions: ", x)
     return x
 
-#xx_temp[:,0] = disturbance(xx1)     # initial conditions different from the ones of xx0_star 
-#xx_temp[:,0] = [700, 0.05, 0.1, 0.1]
-xx_temp[:,0] = np.copy(xx1)
+if(disturb):
+  # initial conditions different from the ones of xx0_star 
+  xx_temp[:,0] = disturbance(xx1)     
+  # Else enter the initial conditions you want to test
+  #xx_temp[:,0] = [700, 0.07, 0.11, 0.1]
+else:
+  xx_temp[:,0] = np.copy(xx1)
 
 for tt in range(ts-1):
   uu_temp[:,tt] = uu_star[:,tt] + KK_reg[:,:,tt]@(xx_temp[:,tt]-xx_star[:,tt])
@@ -397,22 +399,27 @@ if(plot):
   plt.show()
   print("Task 3 completed")
 
-delta_t = param.dt  # ad esempio, 0.1 secondi
+# Define time interval
+delta_t = param.dt  # for example 0.1 seconds
 
-# Calcola le velocità nei componenti x e y per entrambe le traiettorie
+# Get the velocities in x and y
 vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
 vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
 vx_reg = xx_reg[0, :] * np.cos(xx_reg[2, :] - xx_reg[1, :])
 vy_reg = xx_reg[0, :] * np.sin(xx_reg[2, :] - xx_reg[1, :])
 
-# Integra numericamente le velocità per ottenere le posizioni
+# Forward Euler: Integrate numerically the velocities to obtain the positions
 x_star = np.cumsum(vx_star) * delta_t
 y_star = np.cumsum(vy_star) * delta_t
 x_reg = np.cumsum(vx_reg) * delta_t
 y_reg = np.cumsum(vy_reg) * delta_t
 
+# Fix trajectory drift (only visual purposes)
+y_reg = y_reg + (y_star[-1]-y_reg[-1])
+x_reg = x_reg + (x_star[-1]-x_reg[-1])
+
 if(plot):
-  # Traccia le traiettorie
+  # Track trajectories
   plt.plot(x_star, y_star, label='Optimal Trajectory')
   plt.plot(x_reg, y_reg, 'm--', label='Regularized Trajectory')
   plt.xlabel('X position')

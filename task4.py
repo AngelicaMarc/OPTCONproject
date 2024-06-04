@@ -6,12 +6,13 @@ import parameters as param
 import newton as nwt
 import math
 import cost as cst
-import cvxpy as cp
 import random
+import solver_MPC
 
 
 ##############
-plot = 0
+plot = 1 
+disturb = 1
 max_iters = 10
 ##############
 
@@ -30,12 +31,10 @@ tf = ts * dt               # Final time in seconds
 tm = int(ts / 2)           # Middle time step
 stretch = 2*dt*ts*0.001    # For the sigmoid to work properly
 
-# To fix alpha weight we change cost matrices, just for the MPC part
-QQ = np.diag([0.01, 1000.0, 10000.0, 1])     
-RR = np.diag([1.0, 100.0, 1.0])
-#QQ = cst.QQt
-#RR = cst.RRt
-QQf = QQ
+# Cost matrices
+QQ = cst.QQt
+RR = cst.RRt
+
 
 def sigmoid(x):
     if x >= 0:
@@ -249,6 +248,7 @@ x_star = np.cumsum(vx_star) * delta_t
 y_star = np.cumsum(vy_star) * delta_t
 x_ref = np.cumsum(vx_ref) * delta_t
 y_ref = np.cumsum(vy_ref) * delta_t
+
 if(plot):
   # Track trajectories
   plt.plot(x_star, y_star, label='Optimal Trajectory')
@@ -265,143 +265,138 @@ Tsim = ts
 A_opt = np.zeros((ns, ns, ts))
 B_opt = np.zeros((ns, ni, ts))
 
-##
 
-##
+########################
+# Linear Dynamics - get nominal A,B matrices
+########################
+AAnom = np.zeros((ns,ns,ts))
+BBnom = np.zeros((ns,ni,ts))
 
-def linear_mpc(AA, BB, QQ, RR, tl, QQf, xxt, T_pred):
-
-  xxt = xxt.squeeze()
-  
-  xx_mpc = cp.Variable((ns, T_pred))
-  uu_mpc = cp.Variable((ni, T_pred))
-
-  cost = 0
-  constr = []
-  # Tsim-1-T_pred
-  for tt in range(tl, tl + T_pred -1):
-    cost += cp.quad_form(xx_mpc[:,tt-tl] - xx_star[:,tt], QQ) + cp.quad_form(uu_mpc[:,tt-tl] - uu_star[:,tt], RR)
-    constr += [xx_mpc[:,tt+1-tl] - xx_star[:,tt+1] == AA[:,:,tt]@(xx_mpc[:,tt-tl]- xx_star[:,tt]) + BB[:,:,tt]@(uu_mpc[:,tt-tl]- uu_star[:,tt]),  # dynamics constraint
-            # other max/min values constraint
-            # xx_mpc[0,tt+1-tl] >= 508, xx_mpc[0,tt+1-tl] <= 2032,  # V
-            ]
-
-  # sums problem objectives and concatenates constraints
-  cost += cp.quad_form(xx_mpc[:,T_pred-1] - xx_star[:,tl+T_pred-1], QQf)
-  constr += [xx_mpc[:,0] == xxt]
-
-  problem = cp.Problem(cp.Minimize(cost), constr)
-  problem.solve()
-
-  if problem.status == "infeasible":
-  # Otherwise, problem.value is inf or -inf, respectively
-    print("Infeasible problem! CHECK YOUR CONSTRAINTS!!!")
-
-  return xx_mpc.value, uu_mpc.value
+for tt in range(ts-1):
+    fx, fu= param.jacobian(xx_star[:,tt], uu_star[:,tt])
+    AAnom[:,:,tt] = fx.T
+    BBnom[:,:,tt] = fu.T
 
 #############################
 # Model Predictive Control
 #############################
 
-T_pred = 5      # MPC Prediction horizon
+T_pred = 10  # MPC Prediction horizon
+Tsim = ts  # Simulation horizon
 
-xx_real_mpc = np.zeros((ns,Tsim))
-uu_real_mpc = np.zeros((ni,Tsim))
+# Definition of the extended matrices
+AA = np.zeros((ns, ns, ts + T_pred))
+BB = np.zeros((ns, ni, ts + T_pred))
+xx_opt = np.zeros((ns, ts + T_pred))
+uu_opt = np.zeros((ni, ts + T_pred))
 
-xx_mpc = np.zeros((ns, T_pred, Tsim))
-uu_mpc = np.zeros((ni, T_pred, Tsim))
+# Fill the extended matrices with the nominal matrices
+AA[:, :, 0:ts] = AAnom
+BB[:, :, 0:ts] = BBnom
+xx_opt[:, 0:ts] = xx_star
+uu_opt[:, 0:ts] = uu_star
 
+
+# Extend matrices for prediction horizon without using a for loop
+for tt in range(ts,ts+T_pred):
+    AA[:,:,tt] = AAnom[:,:,-1]
+    BB[:,:,tt] = BBnom[:,:,-1]
+    xx_opt[:,tt] = xx_star[:,-1]
+    uu_opt[:,tt] = uu_star[:,-1]
+
+# Initialize arrays for real MPC simulation
+xx_mpc = np.zeros((ns, Tsim))
+uu_mpc = np.zeros((ni, Tsim))
+xx_T_mpc = np.zeros((ns, T_pred, Tsim))
+
+# Perturb initial conditions
 def disturbance(x):
-    y = np.zeros((4))
-    z = y.copy()
-    for i in range(4):
+    n = len(x)
+    print("Initial conditions: ", x)
+    y = np.zeros((n))
+    for i in range(n):
         y[i] = random.uniform(0.1, 0.2)
-        z = x[i]*y[i]
-        x[i] = x[i] + z
+        x[i] = x[i] + x[i]*y[i]
+    print("Disturbance: ", y)
+    print("New initial conditions: ", x)
     return x
 
-#xx_real_mpc[:,0] = disturbance(xx1)    # initial conditions different from the ones of xx0_star 
-xx_real_mpc[:,0] = [650, 0.03, 0.15, 0.01]
+if(disturb):
+  # initial conditions different from the ones of xx0_star 
+  #xx_mpc[:,0] = disturbance(xx1)     
+  # Else enter the initial conditions you want to test
+  xx_mpc[:,0] = [650, 0.06, 0.11, 0]
+else:
+  xx_mpc[:,0] = xx_star[:,0]
 
-for tt in range(Tsim-1):
-  # System evolution - real with MPC
 
-  xx_t_mpc = xx_real_mpc[:,tt]  # get initial condition
-  
-  fx, fu = param.jacobian(xx_star[:,tt], uu_star[:,tt])
-
-  A_opt[:,:,tt] = fx.T
-  B_opt[:,:,tt] = fu.T
-
+for tt in range(Tsim-1): 
+  xx_meas_t = xx_mpc[:,tt] 
   # Solve MPC problem - apply first input
+  if tt%100 == 0: # print every 100 time instants
+        print('MPC:\t t = {} /'.format(tt),Tsim)
 
-  if tt%10 == 0: # print every 10 time instants
-    print('MPC:\t t = {:.1f} sec.'.format(tt*dt))
+  AA_temp = AA[:,:,tt:tt+T_pred] 
+  BB_temp = BB[:,:,tt:tt+T_pred]
+  xx_opt_temp = xx_opt[:,tt:tt+T_pred] 
+  uu_opt_temp = uu_opt[:,tt:tt+T_pred]
 
-  if tt < Tsim-T_pred:
-    xx_mpc[:,:,tt], uu_mpc[:,:,tt]  = linear_mpc(A_opt, B_opt, QQ, RR, tt, QQf, xx_t_mpc, T_pred = T_pred)
-    
-    uu_real_mpc[:,tt] = uu_mpc[:,0,tt]
-    xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,tt], uu_real_mpc[:,tt])
-
-  else:
-    #TO FIX
-    uu_real_mpc[:,tt] = uu_mpc[:,tt-(Tsim-T_pred),Tsim-T_pred-1]
-    xx_real_mpc[:,tt+1] = param.dynamics(xx_real_mpc[:,Tsim-T_pred-1], uu_real_mpc[:,Tsim-T_pred-1])
-
-uu_real_mpc[:,-1] = uu_real_mpc[:,-2]        # for plotting purposes
-
+  uu_mpc[:,tt], xx_T_mpc[:,:,tt] = solver_MPC.linear_mpc(AA_temp, BB_temp,QQ,RR,QQ, xx_meas_t, xx_opt_temp, uu_opt_temp, T_pred)[:2]
+        
+  xx_mpc[:,tt+1] = param.dynamics(xx_mpc[:,tt], uu_mpc[:,tt])
 #######################################
 # Plots
 #######################################
-#print(xx_real_mpc)
+uu_mpc[:,-1] = uu_mpc[:,-2]
+uu_star[:,-1] = uu_star[:,-2]
+time_values = np.arange(0, tf, dt) 
 
 time = np.arange(Tsim)
 fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
-axs[0].plot(time, xx_real_mpc[0,:Tsim],'m', linewidth=2, label='MPC')
+axs[0].plot(time, xx_mpc[0,:Tsim],'m', linewidth=2, label='MPC')
 axs[0].plot(time, xx_star[0,:Tsim],'--g', linewidth=2, label='Optimal')
 axs[0].grid()
 axs[0].set_ylabel('$V$')
 axs[0].set_xlim([-1,Tsim])
 
 #####
-axs[1].plot(time, xx_real_mpc[1,:Tsim],'m', linewidth=2, label='MPC')
+axs[1].plot(time, xx_mpc[1,:Tsim],'m', linewidth=2, label='MPC')
 axs[1].plot(time, xx_star[1,:Tsim], '--g', linewidth=2, label='Optimal')
 axs[1].grid()
 axs[1].set_ylabel('$alpha$')
 axs[1].set_xlim([-1,Tsim])
 
 #####
-axs[2].plot(time, xx_real_mpc[2,:Tsim],'m', linewidth=2, label='MPC')
+axs[2].plot(time, xx_mpc[2,:Tsim],'m', linewidth=2, label='MPC')
 axs[2].plot(time, xx_star[2,:Tsim], '--g', linewidth=2, label='Optimal')
 axs[2].grid()
 axs[2].set_ylabel('$theta$')
 axs[2].set_xlim([-1,Tsim])
 
 #####
-axs[3].plot(time, xx_real_mpc[3,:Tsim],'m', linewidth=2, label='MPC')
+axs[3].plot(time, xx_mpc[3,:Tsim],'m', linewidth=2, label='MPC')
 axs[3].plot(time, xx_star[3,:Tsim], '--g', linewidth=2, label='Optimal')
 axs[3].grid()
 axs[3].set_ylabel('$q$')
 axs[3].set_xlim([-1,Tsim])
 
 #####
-axs[4].plot(time, uu_real_mpc[0,:Tsim],'m', linewidth=2, label='MPC')
+axs[4].plot(time, uu_mpc[0,:Tsim],'m', linewidth=2, label='MPC')
 axs[4].plot(time, uu_star[0,:Tsim],'--g', linewidth=2, label='Optimal')
 axs[4].grid()
 axs[4].set_ylabel('$delta_t$')
 axs[4].set_xlim([-1,Tsim-T_pred])
 
 #####
-axs[5].plot(time, uu_real_mpc[1,:Tsim],'m', linewidth=2, label='MPC')
+axs[5].plot(time, uu_mpc[1,:Tsim],'m', linewidth=2, label='MPC')
 axs[5].plot(time, uu_star[1,:Tsim],'--g', linewidth=2, label='Optimal')
 axs[5].grid()
 axs[5].set_ylabel('$delta_c$')
 axs[5].set_xlim([-1,Tsim])
 
 #####
-axs[6].plot(time, uu_real_mpc[2,:Tsim],'m', linewidth=2, label='MPC')
+axs[6].plot(time, uu_mpc[2,:Tsim],'m', linewidth=2, label='MPC')
 axs[6].plot(time, uu_star[2,:Tsim],'--g', linewidth=2, label='Optimal')
 axs[6].grid()
 axs[6].set_ylabel('$delta_e$')
@@ -411,33 +406,27 @@ axs[6].set_xlim([-1,Tsim])
 fig.align_ylabels(axs)
 
 plt.legend()
+plt.tight_layout()
 plt.show()
 
-# Plotting the trajectory
-
-# plt.plot(xx_real_mpc[0,:]*np.cos(xx_real_mpc[2,:]-xx_real_mpc[1,:]), xx_real_mpc[0,:]*np.sin(xx_real_mpc[2,:]-xx_real_mpc[1,:]), label='MPC Trajectory')
-# plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]),'m--',label='Optimal Trajectory')
-# plt.title('Airplane Trajectory')
-# plt.xlabel('X-axis')
-# plt.ylabel('Y-axis')
-# plt.legend()
-# plt.grid(True)
-# plt.show()
-
 # Define time interval
-delta_t = param.dt  # for example 0.1 seconds
+delta_t = param.dt  
 
 # Get the velocities in x and y
 vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
 vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
-vx_ref = xx_real_mpc[0, :] * np.cos(xx_real_mpc[2, :] - xx_real_mpc[1, :])
-vy_ref = xx_real_mpc[0, :] * np.sin(xx_real_mpc[2, :] - xx_real_mpc[1, :])
+vx_ref = xx_mpc[0, :] * np.cos(xx_mpc[2, :] - xx_mpc[1, :])
+vy_ref = xx_mpc[0, :] * np.sin(xx_mpc[2, :] - xx_mpc[1, :])
 
 # Forward Euler: Integrate numerically the velocities to obtain the positions
 x_star = np.cumsum(vx_star) * delta_t
 y_star = np.cumsum(vy_star) * delta_t
 x_ref = np.cumsum(vx_ref) * delta_t
 y_ref = np.cumsum(vy_ref) * delta_t
+
+# Fix trajectory drift (only visual purposes)
+y_ref = y_ref + (y_star[-1]-y_ref[-1])
+x_ref = x_ref + (x_star[-1]-x_ref[-1])
 
 
 print("Task 4 completed")

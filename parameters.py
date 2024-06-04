@@ -8,7 +8,10 @@ from scipy.optimize import fsolve
 # Conditional variables
 verify_equilibrium = 0
 plot = 0
-verify_jacobian = 0     # Verify the Jacobian of the system, just for debugging\\
+
+# Verify the Jacobian of the system, just for debugging\\
+# Warning: This can stop the other tasks' execution when True
+verify_jacobian = 0
 
 # discretization step
 dt = 1e-2
@@ -54,12 +57,6 @@ uu = np.zeros((ni,1))
 uu[0] = 0.0
 uu[1] = 0.0
 uu[2] = 0.0
-
-#uu[0] = CD / CT  # Throttle
-#uu[1] = (mm*gg - CL + BB[1,1]*BB[0,1]*CM )/(1 - (BB[1,1]*BB[0,0])/(BB[1,0]*BB[0,1]))  # Canard
-#uu[2] = (-CM - BB[0,0]*uu[1])/BB[0,1]  # Elevator
-
-#uu = [0.30953803, -1.04573824, -0.28607073]
 uu = np.squeeze(uu)
 
 def dynamics(xx, uu, flag=1):
@@ -156,14 +153,6 @@ def jacobian(xx, uu):
     fu[2,3] = dt * (0.5 * rho * VV**2 * BB[1,1]) / JJ
 
     return fx , fu
-
-#def func1(xx):
-    xx_full = np.zeros((ns,))
-    xx_full[0] = VV
-    xx_full[1] = alfa
-    np.append(xx_full, xx,0)
-    xx = dynamics(xx_full, uu, 0)
-    return (xx[2:])
 
 def func(input):
     result = dynamics(xx, input[:3], 0)

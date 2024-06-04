@@ -80,10 +80,6 @@ print(f"initial state: {traj_ref[:ns,0]}")
 
 for tt in range(1,ts):
 
-    # traj = param.dynamics(traj_ref[:ns,tt-1], traj_ref[ns:,tt-1],1)
-    
-    # traj_ref[:ns, tt] = traj[:ns]  
-
     if tt < ts/8:
         traj_ref[ns:, tt] = uu1
         traj_ref[:ns, tt] = xx1 
@@ -109,7 +105,6 @@ tt_hor = np.linspace(0,tf,ts)
 
 if(plot):
     # Plot of the reference trajectories
-    
     fig, axs = plt.subplots(ns+ni, 1, sharex='all')
 
     axs[0].plot(tt_hor, traj_ref[0,:], color='b', linewidth=2)
@@ -277,31 +272,23 @@ if(intermediate_plots):
     axs[6].set_xlabel('time')
 
     plt.show()
-#   plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-#   plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
-#   plt.title('Airplane Trajectory')
-#   plt.xlabel('X-axis')
-#   plt.ylabel('Y-axis')
-#   plt.legend()
-#   plt.grid(True)
-#   plt.show()
 
-# Definisci l'intervallo di campionamento temporale
-delta_t = param.dt  # ad esempio, 0.1 secondi
+# Define time interval
+delta_t = param.dt  
 
-# Calcola le velocità nei componenti x e y per entrambe le traiettorie
+# Get the velocities in x and y
 vx_star = xx_star[0, :] * np.cos(xx_star[2, :] - xx_star[1, :])
 vy_star = xx_star[0, :] * np.sin(xx_star[2, :] - xx_star[1, :])
 vx_ref = xx_ref[0, :] * np.cos(xx_ref[2, :] - xx_ref[1, :])
 vy_ref = xx_ref[0, :] * np.sin(xx_ref[2, :] - xx_ref[1, :])
 
-# Integra numericamente le velocità per ottenere le posizioni
+# Forward Euler: Integrate numerically the velocities to obtain the positions
 x_star = np.cumsum(vx_star) * delta_t
 y_star = np.cumsum(vy_star) * delta_t
 x_ref = np.cumsum(vx_ref) * delta_t
 y_ref = np.cumsum(vy_ref) * delta_t
 
-# Traccia le traiettorie
+# Track Trajectory
 plt.plot(x_star, y_star, label='Optimal Trajectory')
 plt.plot(x_ref, y_ref, 'm--', label='Reference Trajectory')
 plt.xlabel('X position')

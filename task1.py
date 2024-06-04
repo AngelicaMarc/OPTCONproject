@@ -5,8 +5,8 @@ import parameters as param
 import newton as nwt
 
 # Plot the equilibrium points
-plot = 0
-intermediate_plots = 1
+plot = 1
+intermediate_plots = 0
 ##############
 
 # Import model parameters
@@ -47,17 +47,11 @@ def find_equilibria(u_guess, type):
     eq = equilibrium_inputs[:3]
     return eq
 
-#uu1 = [0.19707068, -1.01877927, -0.28067893]
 xx1 = [600, 0.1, 0.2, 0]
 uu1 = find_equilibria(uu0, 1)
 
-
-#uu2 = [0.42612887, -0.35995701, -0.14891448 ]
 xx2 = [900, 0.1, 0.26, 0]
 uu2 = find_equilibria(uu0, 2)
-
-#uu2 = [0.28186975 -0.56941592 -0.19080626 ]
-#xx2 = [750, 0.2, 0, 0]
 
 # Initialize the reference trajectory
 
@@ -68,10 +62,6 @@ traj_ref[ns:,0] = uu1
 print(f"initial state: {traj_ref[:ns,0]}")
 
 for tt in range(1,ts):
-
-    #traj = param.dynamics(traj_ref[:ns,tt-1], traj_ref[ns:,tt-1],1)
-    
-    #traj_ref[:ns, tt] = traj[:ns]  
 
     if tt < tm:
         traj_ref[ns:, tt] = uu1
@@ -253,16 +243,6 @@ if(intermediate_plots):
     axs[6].set_xlabel('time')
       
     plt.show()
-
-# Plotting the trajectory
-# plt.plot(xx_star[0,:]*np.cos(xx_star[2,:]-xx_star[1,:]), xx_star[0,:]*np.sin(xx_star[2,:]-xx_star[1,:]), label='Optimal Trajectory')
-# plt.plot(xx_ref[0,:]*np.cos(xx_ref[2,:]-xx_ref[1,:]), xx_ref[0,:]*np.sin(xx_ref[2,:]-xx_ref[1,:]),'m--', label='Reference Trajectory')
-# plt.title('Airplane Trajectory')
-# plt.xlabel('X-axis')
-# plt.ylabel('Y-axis')
-# plt.legend()
-# plt.grid(True)
-# plt.show()
 
 # Define time interval
 delta_t = param.dt  # for example 0.1 seconds
