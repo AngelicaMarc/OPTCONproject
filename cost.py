@@ -5,7 +5,6 @@ import parameters as dyn
 ns = dyn.ns
 ni = dyn.ni
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Define Cost Matrices accordingly on the choosen dynamics
 
 QQt = np.diag([0.01, 1000, 1000, 0.01])                    # cost for xx = [VV, alfa, theta, qq]
