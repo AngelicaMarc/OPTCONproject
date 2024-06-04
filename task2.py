@@ -63,12 +63,10 @@ def find_equilibria(u_guess, type):
     eq = equilibrium_inputs[:3]
     return eq
 
-#uu1 = [0.30953803, -1.04573824, -0.28607073]
-xx1 = [600, 0, 0.2, 0]
+xx1 = [600, 0.05, 0.1, 0]
 uu1 = find_equilibria(uu0, 1)
 
-#uu2 = [0.42612887, -0.35995701, -0.14891448 ]
-xx2 = [900, 0.1, 0.26, 0]
+xx2 = [900, 0.1, 0.2, 0]
 uu2 = find_equilibria(uu0, 2)
 
 # Initialize the reference trajectory
